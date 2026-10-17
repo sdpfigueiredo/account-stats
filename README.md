@@ -168,3 +168,10 @@ MIT; see [LICENSE](LICENSE). The runtime modules are unchanged from v1.3.0. Vers
 [3]: https://code.claude.com/docs/en/plugins/mods/overview
 [4]: https://code.claude.com/docs/en/plugins/marketplace-reference
 [5]: https://code.claude.com/docs/en/plugins/host-marketplace
+
+## Screenshots:
+<img width="726" height="1009" alt="image" src="https://github.com/user-attachments/assets/0df87840-ff63-4172-993a-062cbafb73d8" />
+
+weekly quota usage:
+<img width="708" height="997" alt="image" src="https://github.com/user-attachments/assets/de3cafac-38ad-4506-8642-c7f17aee125a" />
+
