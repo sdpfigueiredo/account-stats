@@ -1,0 +1,36 @@
+name: Source checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source:
+    name: Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22', '24']
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          package-manager-cache: false
+      # No npm install/ci: this project has no npm dependencies or lifecycle hooks.
+      - run: npm run check
+      - run: npm test
+      - run: npm run preview
+      - name: Check the committed demo matches its source
+        run: git diff --exit-code -- preview/index.html
+
+# This workflow does not run the Claude Desktop runtime or Anthropic's loader.
+# Official validation is a separate maintainer step: claude plugin validate --strict .

@@ -1,0 +1,15 @@
+{
+  "name": "account-stats-desktop",
+  "version": "1.3.1",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "check": "node scripts/check.mjs",
+    "preview": "node scripts/build-preview.mjs",
+    "check:repository": "node scripts/check-repository.mjs"
+  }
+}

@@ -1,0 +1,1926 @@
+<!doctype html><html lang="en-US"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Account Stats — preview</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0b0d13;color:#f0f1fa;font:13px/1.5 'Segoe UI',Arial,sans-serif}body[data-theme=light]{background:#e8ebf3;color:#20263b}
+.banner{position:sticky;top:0;z-index:5;background:#20212ded;backdrop-filter:blur(10px);padding:12px 22px;text-align:center;color:#ccc5ff;border-bottom:1px solid #39394b;font-size:12px}
+.preview-language{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:10px}.preview-language select{flex:0 1 230px}.banner strong{font-weight:650} .shell{width:min(100%,572px);margin:28px auto 60px;border:1px solid #2a3042;border-radius:22px;overflow:hidden;box-shadow:0 24px 90px #0006}
+.frame{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:#181b26;color:#b8c0d4;border-bottom:1px solid #2a3042;font-size:12px}.frame small{opacity:.65}
+#panel{padding:16px 8px;background:#10121a}.custom-svg{display:block;flex-shrink:0;align-self:center}button{font:inherit;font-size:12px;border:1px solid #373b50;border-radius:9px;background:#252936;color:#eff0fc;padding:6px 10px;margin:0;cursor:pointer;white-space:nowrap;transition:border-color .15s,background .15s}
+button:hover{background:#333747;border-color:#a397ff}button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #a397ff;outline-offset:2px}.dim{color:#959eb5;background:transparent;border-color:transparent} .picker{display:flex;align-items:center;gap:12px;margin:0;color:#9ca6be;font-size:11px}.picker>span{min-width:44px;max-width:155px}
+select,input{font:inherit;font-size:12px;padding:9px 10px;border:1px solid #30364a;background:#181b26;color:#e7e8f5;border-radius:9px;min-width:0;max-width:100%;flex:1}select{cursor:pointer}.host-text{font-size:10px;line-height:1.6;margin:0;overflow-wrap:anywhere}.box{min-width:0}
+body[data-theme=light] #panel{background:#f4f5fa}body[data-theme=light] button,body[data-theme=light] select,body[data-theme=light] input{background:#fff;color:#303b53;border-color:#d4daea}body[data-theme=light] .dim{color:#748099;background:transparent;border-color:transparent}
+body[data-theme=light] .frame{background:#fff;color:#47516a;border-color:#dce1ed}body[data-theme=light] .shell{border-color:#dce1ed;box-shadow:0 24px 70px #24334d15}
+@media(max-width:600px){.shell{margin:0 auto;border:0;border-radius:0}.banner{font-size:10px;padding:9px}#panel{padding:10px 0}.frame{padding:10px 14px}button{padding:6px 7px;font-size:11px}}
+</style><body data-theme="dark"><div class="banner"><strong id="preview-banner">DEMO · FICTITIOUS DATA</strong><br><span id="preview-help">Real mod SVG. Simulated controls, not a Claude Desktop screenshot.</span><label class="preview-language"><span id="preview-language-label">Simulated Claude Code language</span><select id="preview-language" aria-label="Simulated Claude Code language"><option value="english">English (US)</option><option value="en-GB">English (UK)</option><option value="pt-PT">Português (Portugal)</option><option value="pt-BR">Português (Brasil)</option><option value="es-ES">Español</option><option value="fr-FR">Français</option><option value="de-DE">Deutsch</option><option value="it-IT">Italiano</option><option value="">Not configured → English</option><option value="ja-JP">日本語 → English fallback</option></select></label></div>
+<main class="shell"><header class="frame"><span>▥ &nbsp; Account Stats</span><small id="preview-frame">Interactive preview</small></header><div id="panel"></div></main>
+<script type="module">const x = escapeXml;
+
+// lib/locales/en.js
+/** English source catalogue. Message IDs and interpolation tokens are stable. */
+const en = {
+  command: 'Open local statistics and account limits',
+  all: 'All time', days7: '7 days', days30: '30 days', thisQuota: 'This quota',
+  refreshing: 'Updating…', refresh: 'Refresh', byDay: 'By day', byWeek: 'By weekly quota',
+  model: 'Model', allModels: 'All models', chart: 'Chart', day: 'Day', week: 'Weekly quota',
+  metricTotal: 'Total · read + write + input + output', metricCost: 'API equivalent cost · USD',
+  metricCache: 'Cache · read + write', metricRead: 'Cache read only', metricWrite: 'Cache write only',
+  metricInput: 'Uncached input only', metricOutput: 'Output only',
+  read: 'Cache read', write: 'Cache write', input: 'Uncached input', output: 'Output', total: 'Total',
+  tokens: '{n} tokens', requests: '{n} requests',
+  olderWeeks: '← Earlier quotas', newerWeeks: 'Later quotas →', olderDays: '← Earlier days', newerDays: 'Later days →',
+  page: 'Page {page}/{pages} · {start} — {end}',
+  reset: 'Reset: {day} at {time} · {zone}', currentInterval: 'Current quota: {interval} · in progress',
+  clippedHelp: 'The 7-day/30-day filters cut the first quota at midnight on the first day of the filter. * = partial quota in the filter. All time shows quotas without this cut.',
+  ongoing: 'In progress', closed: 'Closed', partialFilter: 'Partial in filter',
+  modelsDay: 'Models on this day', modelsWeek: 'Models in this quota', modelsPeriod: 'Models in the period',
+  inPeriod: 'In the period', modelsOnDate: 'Models · {date}', previousModels: '← Models', moreModels: 'More models →',
+  fullFilter: '{start} — {end} · entire filter', details: '{requests} requests · {tokens} tokens',
+  costPeriod: 'API equivalent · period', costWeek: 'API equivalent · this quota', costDay: 'API equivalent · this day',
+  periodSubtitle: '{start} → {end} · all days in the filter',
+  export: 'Export CSV', light: '☼ Light', dark: '◐ Dark', settings: 'Settings', closeSettings: 'Close settings', diagnostics: 'Diagnostics',
+  settingsSaved: 'These panel settings are saved between sessions.', quotaHeading: 'WEEKLY QUOTA',
+  resetDay: 'Reset day', resetTime: 'Reset time (24 h)', save: 'save',
+  resetHelp: 'Grouping follows the time zone below, including daylight saving changes. Use UTC for a fixed UTC reset. Changing the reset regroups local history; it does not change your actual account limit.',
+  timeZone: 'IANA time zone', extraRoots: 'Extra folders (separated by ;)', includeSubagents: 'Include subagents',
+  rootsHelp: 'Transcripts are read-only. Extra folders may combine machines or profiles; there is no automatic account filtering.',
+  languageHeading: 'LANGUAGE', languageStatus: 'Language: {locale} · follows Claude Code',
+  languageHelp: 'Read from Claude Code’s language setting, not from the language of your messages. No separate language preference is saved by this mod.',
+  languageDefault: 'Claude Code has no explicit language setting; English is used.',
+  languageFallback: 'No translation for “{language}” in this version; English is used.',
+  languageUnavailable: 'Claude Code settings are unavailable. The last detected language is kept; a new session starts in English.',
+  pricingHeading: 'API EQUIVALENT COST',
+  pricingHelp: 'Official standard USD rates, checked on {date}. History is valued at these rates; this is not an invoice or subscription quota.',
+  ttlHelp: 'Cache write uses the 5-minute / 1-hour rate when the log records the TTL. Otherwise a range is shown, without silently assuming 5 minutes.',
+  exclusions: 'Excludes taxes, Fast mode, Batch/contract discounts, regional premiums and tool fees. Models without verified rates are flagged and never use another model’s price.',
+  diagnosticsHeading: 'DIAGNOSTICS', diagnosticsPricing: 'API rates: {date} · status: {status} · unpriced tokens: {tokens}',
+  diagnosticsModel: 'Incomplete pricing: {model} · {tokens} tokens', nodePending: 'not found yet',
+  diagnosticsNode: 'Node: {node} · time zone: {zone}', diagnosticsReset: 'Reset: {day} {time} · indexed quotas: {count}',
+  diagnosticsFiles: 'Files: {found} found · {indexed} indexed · {archived} removed at source',
+  diagnosticsDuplicates: 'Cross-file duplicates: {duplicates} · invalid JSON: {malformed} · lines >32 MiB: {oversized}',
+  diagnosticsRecords: 'UUID fallback: {weak} · future records ignored: {future} · subagent requests: {agents}',
+  source: 'Source: {path}', index: 'Index: {path}', technicalError: 'Technical detail: {detail}',
+  updated: 'Updated: {date} · automatic refresh every 30 s while the panel is open',
+  historyHelp: 'History from this local profile, not account-wide billing. Other devices and claude.ai conversations are not automatically included.',
+  categoriesHelp: 'Read = cache read · Write = cache created · Input = uncached input · Output = generated output. Cache hit = read ÷ (read + write + input).',
+  errorSave: 'Could not save preferences.', errorLimits: 'Official limits are unavailable in this session.',
+  errorNode: 'Node.js 20+ was not found or execution is blocked. Enter the full path to node.exe (or node) in Settings.',
+  errorJson: 'The indexer did not return valid JSON. Check the Node executable and plugin installation.',
+  errorIndexer: 'The indexer failed. See Diagnostics for the technical detail.', errorResponse: 'Incompatible indexer response.',
+  exportBusy: 'An update is in progress. Export when it finishes.', exportSaved: 'CSV saved to: {path}',
+  exportRetry: 'Another session is indexing. Try exporting after the update.',
+  errorResetDay: 'Invalid reset day.', errorResetTime: 'Invalid reset time. Use HH:mm, for example 20:00.',
+  errorTimeZone: 'Invalid time zone. Example: Europe/Lisbon',
+  errorResetConfig: 'Invalid reset configuration; restored to Thursday at 20:00, Europe/Lisbon.',
+  commandOptions: 'Options: /account-stats [quota|weeks|7d|30d|all|settings|refresh|close]',
+  loggedOut: 'Signed out. Local history may include other accounts used in this profile.',
+  updateFailed: 'Could not update', indexBusy: 'Another session is updating the index. Showing the last available result.',
+  importPartial: 'Partial import · {n} files remaining. Totals may still increase.',
+  loadingTitle: 'Reading your history', loadingHelp: 'The first load indexes local files. No content is sent to a server.',
+  preparingTitle: 'Preparing weekly quotas', preparingHelp: 'History is being regrouped using your reset settings. Totals from another configuration are not shown.',
+  emptyTitle: 'No history available yet', emptyHelp: 'No token records were found. Check the folders in Diagnostics or add a folder in Settings.',
+  headerTagline: 'Your usage, at your pace.', localPrivate: 'Local · private', headerUpdating: 'Updating',
+  headerAlt: 'Account Stats. Local, private history.',
+  rangeQuota: 'THIS QUOTA · IN PROGRESS', rangeAll: 'ALL HISTORY', range7: 'LAST 7 DAYS', range30: 'LAST 30 DAYS',
+  cacheReuse: 'CACHE REUSE', activeRequests: '{days} active days · {requests} requests',
+  overviewAlt: 'Period {start} to {end}. Total {total}; cache read {read}, cache write {write}, uncached input {input}, output {output}.',
+  chartCostWeek: 'API cost by quota', chartCostDay: 'API cost by day', chartWeeks: 'Weekly quotas', chartDays: 'Daily activity',
+  chartPricing: 'Standard equivalent · USD · rates {date}', chartStarts: 'Quota start dates · {zone}',
+  quotaCount: '{n} QUOTAS', quotaOne: '1 QUOTA', dayCount: '{n} DAYS', dayOne: '1 DAY',
+  chartUncertainty: 'Translucent top = unknown TTL · ? = unpriced tokens',
+  chartCostAlt: 'Standard API chart in USD {grouping}. {values}.',
+  chartTokenAlt: 'Chart {grouping} from {start} to {end}. {values}. The {selector} selector shows the per-model detail.',
+  groupingWeek: 'by weekly quota', groupingDay: 'by day', incompletePrice: 'incomplete pricing',
+  noUsage: 'No usage recorded in this interval.', partial: 'partial',
+  modelAlt: '{model}: cache read {read}, cache write {write}, input {input}, output {output}; API equivalent USD {cost} ({status})',
+  costUnavailable: 'No verified rate', costPartial: 'Subtotal with known prices', costRange: 'Estimated range · unknown cache TTL',
+  costEstimated: 'Estimate · not a charge', costEmpty: 'No usage in this interval', unpriced: 'Unpriced',
+  costNote: 'Standard API · rates {date} · excludes taxes / extras',
+  costUnpriced: '{tokens} unpriced tokens, excluded from this subtotal.', costUnknownTtl: 'TTL missing: 5-minute lower bound; 1-hour upper bound.',
+  costAlt: 'API equivalent · {title}. {subtitle}. USD {amount}. Cache read {read}; cache write {write}; uncached input {input}; output {output}. {badge}. {tokens} unpriced tokens. Standard rates {date}, excluding taxes and extra fees.',
+  selectedQuota: 'SELECTED QUOTA', currentQuota: 'CURRENT QUOTA', boundaries: 'start included, end excluded',
+  totalFilter: 'Total in filter', fourCategories: '4 token categories', clippedNote: 'Partial: only days covered by the selected filter.',
+  cycleAlt: 'Quota {interval}, {zone}. {state}. {partial}Total {total}, cache read {read}, cache write {write}, uncached input {input}, output {output}. Total = cache read + cache write + uncached input + output. Start included; end excluded.',
+  limitsTitle: 'Account limits', limitsHelp: 'Reported by Claude · separate from local totals', limitsUnavailable: 'Unavailable in this session or account type.',
+  fiveHour: '5-hour window', sevenDay: '7-day window', sonnet7: 'Sonnet · 7 days', opus7: 'Opus · 7 days', usage: 'Usage',
+  toConfirm: 'to be confirmed', renews: 'Resets: {date}', limitsAlt: 'Account limits unavailable.',
+  previewTitle: 'Account Stats — demo', previewBanner: 'DEMO · FICTITIOUS DATA',
+  previewHelp: 'Real plugin SVGs. Browser-simulated controls; not a Claude Desktop screenshot.', previewFrame: 'Interactive preview',
+  previewLanguage: 'Simulated Claude Code language', previewNoFile: 'DEMO — no real file created',
+};
+
+
+// lib/locales/pt-PT.js
+/** Portuguese (Portugal). Technical cache categories retain their familiar names. */
+const ptPT = {
+  command: 'Abrir estatísticas locais e limites da conta',
+  all: 'Todo o histórico', days7: '7 dias', days30: '30 dias', thisQuota: 'Esta cota',
+  refreshing: 'A atualizar…', refresh: 'Atualizar', byDay: 'Por dia', byWeek: 'Por cota semanal',
+  model: 'Modelo', allModels: 'Todos os modelos', chart: 'Gráfico', day: 'Dia', week: 'Cota semanal',
+  metricTotal: 'Total · read + write + input + output', metricCost: 'Custo equivalente API · USD',
+  metricCache: 'Cache · read + write', metricRead: 'Apenas cache read', metricWrite: 'Apenas cache write',
+  metricInput: 'Apenas input novo', metricOutput: 'Apenas output',
+  read: 'Cache read', write: 'Cache write', input: 'Input novo', output: 'Output', total: 'Total',
+  tokens: '{n} tokens', requests: '{n} pedidos',
+  olderWeeks: '← Cotas anteriores', newerWeeks: 'Cotas seguintes →', olderDays: '← Dias anteriores', newerDays: 'Dias seguintes →',
+  page: 'Bloco {page}/{pages} · {start} — {end}',
+  reset: 'Reset: {day} às {time} · {zone}', currentInterval: 'Cota atual: {interval} · em curso',
+  clippedHelp: 'Os filtros 7 dias/30 dias cortam a primeira cota à meia-noite do início do filtro. * = cota parcial no filtro. Todo o histórico mostra as cotas sem esse corte.',
+  ongoing: 'Em curso', closed: 'Fechada', partialFilter: 'Parcial no filtro',
+  modelsDay: 'Modelos neste dia', modelsWeek: 'Modelos nesta cota', modelsPeriod: 'Modelos no período',
+  inPeriod: 'No período', modelsOnDate: 'Modelos · {date}', previousModels: '← Modelos', moreModels: 'Mais modelos →',
+  fullFilter: '{start} — {end} · todo o filtro', details: '{requests} pedidos · {tokens} tokens',
+  costPeriod: 'Equivalente API · período', costWeek: 'Equivalente API · esta cota', costDay: 'Equivalente API · este dia',
+  periodSubtitle: '{start} → {end} · todos os dias do filtro',
+  export: 'Exportar CSV', light: '☼ Claro', dark: '◐ Escuro', settings: 'Configuração', closeSettings: 'Fechar configuração', diagnostics: 'Diagnóstico',
+  settingsSaved: 'A configuração deste painel fica guardada entre sessões.', quotaHeading: 'COTA SEMANAL',
+  resetDay: 'Dia do reset', resetTime: 'Hora do reset (24 h)', save: 'guardar',
+  resetHelp: 'O agrupamento segue o fuso abaixo, incluindo mudanças de hora. Usa UTC para um reset fixo em UTC. Alterar o reset reagrupa todo o histórico local; não muda o limite real da conta.',
+  timeZone: 'Fuso horário IANA', extraRoots: 'Pastas extra (separadas por ;)', includeSubagents: 'Incluir subagents',
+  rootsHelp: 'Apenas leitura das transcrições. Pastas extra podem combinar máquinas ou perfis; não existe filtragem automática por conta.',
+  languageHeading: 'LÍNGUA', languageStatus: 'Língua: {locale} · segue o Claude Code',
+  languageHelp: 'Lida da definição language do Claude Code, não da língua das mensagens. O mod não guarda uma preferência de língua separada.',
+  languageDefault: 'O Claude Code não tem uma língua explicitamente configurada; é usado inglês.',
+  languageFallback: 'Esta versão não tem tradução para “{language}”; é usado inglês.',
+  languageUnavailable: 'As definições do Claude Code estão indisponíveis. Mantém-se a última língua detetada; uma nova sessão começa em inglês.',
+  pricingHeading: 'CUSTO EQUIVALENTE NA API',
+  pricingHelp: 'Tarifas oficiais standard em USD, verificadas em {date}. O histórico é recalculado a estes preços; não representa a fatura nem a cota da subscrição.',
+  ttlHelp: 'Cache write: usa 5 min / 1 h quando o log identifica o TTL. Caso contrário mostra um intervalo, sem assumir silenciosamente 5 min.',
+  exclusions: 'Exclui impostos, Fast mode, descontos Batch/contratuais, suplementos regionais e taxas de ferramentas. Modelos sem tarifa verificada ficam sinalizados e não recebem preços de outro modelo.',
+  diagnosticsHeading: 'DIAGNÓSTICO', diagnosticsPricing: 'Tarifas API: {date} · estado: {status} · tokens sem preço: {tokens}',
+  diagnosticsModel: 'Sem preço completo: {model} · {tokens} tokens', nodePending: 'por localizar',
+  diagnosticsNode: 'Node: {node} · fuso: {zone}', diagnosticsReset: 'Reset: {day} {time} · cotas indexadas: {count}',
+  diagnosticsFiles: 'Ficheiros: {found} encontrados · {indexed} indexados · {archived} já removidos na origem',
+  diagnosticsDuplicates: 'Duplicados entre ficheiros: {duplicates} · JSON inválido: {malformed} · linhas >32 MiB: {oversized}',
+  diagnosticsRecords: 'Fallback UUID: {weak} · registos futuros ignorados: {future} · pedidos de subagents: {agents}',
+  source: 'Origem: {path}', index: 'Índice: {path}', technicalError: 'Detalhe técnico: {detail}',
+  updated: 'Atualizado: {date} · atualização automática a cada 30 s com o painel aberto',
+  historyHelp: 'Histórico deste perfil local, não faturação global da conta. Não inclui automaticamente outros dispositivos nem conversas de claude.ai.',
+  categoriesHelp: 'Read = cache lida · Write = cache criada · Input = entrada não cacheada · Output = saída. Cache hit = read ÷ (read + write + input).',
+  errorSave: 'Não foi possível guardar as preferências.', errorLimits: 'Os limites oficiais não estão disponíveis nesta sessão.',
+  errorNode: 'Node.js 20+ não encontrado ou execução bloqueada. Em Configuração indica o caminho completo para node.exe (ou node).',
+  errorJson: 'O indexador não devolveu JSON válido. Confirma o executável Node e a instalação do plugin.',
+  errorIndexer: 'O indexador terminou com erro. Consulta o detalhe técnico em Diagnóstico.', errorResponse: 'Resposta do indexador incompatível.',
+  exportBusy: 'A atualização está em curso. Exporta quando terminar.', exportSaved: 'CSV guardado em: {path}',
+  exportRetry: 'Outra sessão está a indexar. Repete a exportação após a atualização.',
+  errorResetDay: 'Dia de reset inválido.', errorResetTime: 'Hora de reset inválida. Usa HH:mm, por exemplo 20:00.',
+  errorTimeZone: 'Fuso horário inválido. Exemplo: Europe/Lisbon',
+  errorResetConfig: 'Configuração de reset inválida; reposta para quinta-feira às 20:00, Europe/Lisbon.',
+  commandOptions: 'Opções: /account-stats [quota|weeks|7d|30d|all|settings|refresh|close]',
+  loggedOut: 'Sessão terminada. O histórico local pode incluir outras contas usadas neste perfil.',
+  updateFailed: 'Não foi possível atualizar', indexBusy: 'Outra sessão está a atualizar o índice. A mostrar o último resultado disponível.',
+  importPartial: 'Importação parcial · {n} ficheiros por concluir. Os totais ainda podem aumentar.',
+  loadingTitle: 'A ler o teu histórico', loadingHelp: 'O primeiro carregamento indexa os ficheiros locais. Nenhum conteúdo é enviado para um servidor.',
+  preparingTitle: 'A preparar as cotas semanais', preparingHelp: 'O histórico está a ser reagrupado com o reset configurado. Não são apresentados totais de outra configuração.',
+  emptyTitle: 'Ainda sem histórico disponível', emptyHelp: 'Não foram encontrados registos de tokens. Confirma as pastas em Diagnóstico ou adiciona uma pasta em Configuração.',
+  headerTagline: 'O teu uso, ao teu ritmo.', localPrivate: 'Local · privado', headerUpdating: 'A atualizar', headerAlt: 'Account Stats. Histórico local e privado.',
+  rangeQuota: 'ESTA COTA · EM CURSO', rangeAll: 'TODO O HISTÓRICO', range7: 'ÚLTIMOS 7 DIAS', range30: 'ÚLTIMOS 30 DIAS',
+  cacheReuse: 'REUTILIZAÇÃO DE CACHE', activeRequests: '{days} dias ativos · {requests} pedidos',
+  overviewAlt: 'Período {start} a {end}. Total {total}; cache read {read}, cache write {write}, input novo {input}, output {output}.',
+  chartCostWeek: 'Custo API por cota', chartCostDay: 'Custo API por dia', chartWeeks: 'Cotas semanais', chartDays: 'Atividade diária',
+  chartPricing: 'Equivalente standard · USD · preços {date}', chartStarts: 'Início das cotas · {zone}',
+  quotaCount: '{n} COTAS', quotaOne: '1 COTA', dayCount: '{n} DIAS', dayOne: '1 DIA',
+  chartUncertainty: 'Topo translúcido = TTL desconhecido · ? = tokens sem preço',
+  chartCostAlt: 'Gráfico API standard em USD {grouping}. {values}.',
+  chartTokenAlt: 'Gráfico {grouping} de {start} a {end}. {values}. O seletor {selector} apresenta o detalhe por modelo.',
+  groupingWeek: 'por cota semanal', groupingDay: 'diário', incompletePrice: 'preço incompleto',
+  noUsage: 'Sem utilização registada neste intervalo.', partial: 'parcial',
+  modelAlt: '{model}: cache read {read}, cache write {write}, input {input}, output {output}; API equivalente USD {cost} ({status})',
+  costUnavailable: 'Sem tarifa confirmada', costPartial: 'Subtotal com preços conhecidos', costRange: 'Intervalo estimado · cache com TTL desconhecido',
+  costEstimated: 'Estimativa · não é uma cobrança', costEmpty: 'Sem utilização neste intervalo', unpriced: 'Sem preço',
+  costNote: 'API standard · preços {date} · sem impostos / extras',
+  costUnpriced: '{tokens} tokens sem preço, excluídos deste subtotal.', costUnknownTtl: 'TTL ausente: limite inferior 5 min; superior 1 h.',
+  costAlt: 'API equivalente · {title}. {subtitle}. USD {amount}. Cache read {read}; cache write {write}; input novo {input}; output {output}. {badge}. {tokens} tokens sem preço. Preços standard {date}, sem impostos nem taxas adicionais.',
+  selectedQuota: 'COTA SELECIONADA', currentQuota: 'COTA ATUAL', boundaries: 'início incluído, fim excluído',
+  totalFilter: 'Total no filtro', fourCategories: '4 categorias de tokens', clippedNote: 'Parcial: apenas os dias abrangidos pelo filtro selecionado.',
+  cycleAlt: 'Cota {interval}, {zone}. {state}. {partial}Total {total}, cache read {read}, cache write {write}, input novo {input}, output {output}. Total = cache read + cache write + input novo + output. Início incluído; fim excluído.',
+  limitsTitle: 'Limites da conta', limitsHelp: 'Valores do Claude · separados dos totais locais', limitsUnavailable: 'Indisponíveis nesta sessão ou neste tipo de conta.',
+  fiveHour: 'Janela de 5 horas', sevenDay: 'Janela de 7 dias', sonnet7: 'Sonnet · 7 dias', opus7: 'Opus · 7 dias', usage: 'Utilização',
+  toConfirm: 'por confirmar', renews: 'Renova: {date}', limitsAlt: 'Limites da conta não disponíveis.',
+  previewTitle: 'Account Stats — demonstração', previewBanner: 'DEMONSTRAÇÃO · DADOS FICTÍCIOS',
+  previewHelp: 'SVG do plugin real. Controlos simulados no browser; não é uma captura do Claude Desktop.', previewFrame: 'Pré-visualização interativa',
+  previewLanguage: 'Língua simulada do Claude Code', previewNoFile: 'DEMONSTRAÇÃO — nenhum ficheiro real criado',
+};
+
+
+// lib/locales/pt-BR.js
+
+/** Shared Portuguese copy, with Brazilian vocabulary and independent Intl formats. */
+const ptBR = { ...ptPT,
+  headerTagline: 'Seu uso, no seu ritmo.',
+  settingsSaved: 'As configurações deste painel ficam salvas entre sessões.',
+  languageStatus: 'Idioma: {locale} · acompanha o Claude Code', languageHeading: 'IDIOMA',
+  languageHelp: 'Lido da configuração language do Claude Code, não do idioma das mensagens. O mod não salva uma preferência de idioma separada.',
+  languageDefault: 'O Claude Code não tem um idioma configurado explicitamente; o inglês é usado.',
+  languageFallback: 'Esta versão não tem tradução para “{language}”; o inglês é usado.',
+  languageUnavailable: 'As configurações do Claude Code estão indisponíveis. O último idioma detectado é mantido; uma nova sessão começa em inglês.',
+  settings: 'Configurações', closeSettings: 'Fechar configurações', save: 'salvar',
+  resetHelp: 'O agrupamento segue o fuso abaixo, incluindo mudanças de horário. Use UTC para um reset fixo em UTC. Alterar o reset reagrupa todo o histórico local; não muda o limite real da conta.',
+  rootsHelp: 'As transcrições são somente leitura. Pastas extras podem combinar máquinas ou perfis; não existe filtragem automática por conta.',
+  pricingHelp: 'Tarifas oficiais padrão em USD, verificadas em {date}. O histórico é recalculado com esses preços; não representa a fatura nem a cota da assinatura.',
+  errorSave: 'Não foi possível salvar as preferências.',
+  errorNode: 'Node.js 20+ não encontrado ou execução bloqueada. Em Configurações, informe o caminho completo para node.exe (ou node).',
+  errorJson: 'O indexador não retornou JSON válido. Verifique o executável Node e a instalação do plugin.',
+  errorIndexer: 'O indexador terminou com erro. Consulte o detalhe técnico em Diagnóstico.',
+  exportBusy: 'A atualização está em andamento. Exporte quando terminar.', exportSaved: 'CSV salvo em: {path}',
+  exportRetry: 'Outra sessão está indexando. Repita a exportação após a atualização.',
+  errorResetTime: 'Hora de reset inválida. Use HH:mm, por exemplo 20:00.',
+  errorResetConfig: 'Configuração de reset inválida; restaurada para quinta-feira às 20:00, Europe/Lisbon.',
+  loadingTitle: 'Lendo seu histórico', loadingHelp: 'O primeiro carregamento indexa os arquivos locais. Nenhum conteúdo é enviado para um servidor.',
+  preparingTitle: 'Preparando as cotas semanais', preparingHelp: 'O histórico está sendo reagrupado com o reset configurado. Não são apresentados totais de outra configuração.',
+  emptyHelp: 'Não foram encontrados registros de tokens. Verifique as pastas em Diagnóstico ou adicione uma pasta em Configurações.',
+  importPartial: 'Importação parcial · {n} arquivos por concluir. Os totais ainda podem aumentar.',
+  indexBusy: 'Outra sessão está atualizando o índice. Exibindo o último resultado disponível.',
+  noUsage: 'Nenhum uso registrado neste intervalo.',
+  historyHelp: 'Histórico deste perfil local, não faturamento global da conta. Não inclui automaticamente outros dispositivos nem conversas de claude.ai.',
+  diagnosticsFiles: 'Arquivos: {found} encontrados · {indexed} indexados · {archived} removidos na origem',
+  diagnosticsDuplicates: 'Duplicados entre arquivos: {duplicates} · JSON inválido: {malformed} · linhas >32 MiB: {oversized}',
+  diagnosticsRecords: 'Fallback UUID: {weak} · registros futuros ignorados: {future} · pedidos de subagents: {agents}',
+  previewFrame: 'Prévia interativa', previewLanguage: 'Idioma simulado do Claude Code',
+  previewHelp: 'SVG do plugin real. Controles simulados no navegador; não é uma captura do Claude Desktop.',
+  previewNoFile: 'DEMONSTRAÇÃO — nenhum arquivo real criado',
+};
+
+
+// lib/locales/es.js
+const es = {
+  command: 'Abrir estadísticas locales y límites de la cuenta',
+  all: 'Todo el historial', days7: '7 días', days30: '30 días', thisQuota: 'Esta cuota',
+  refreshing: 'Actualizando…', refresh: 'Actualizar', byDay: 'Por día', byWeek: 'Por cuota semanal',
+  model: 'Modelo', allModels: 'Todos los modelos', chart: 'Gráfico', day: 'Día', week: 'Cuota semanal',
+  metricTotal: 'Total · lectura + escritura + entrada + salida', metricCost: 'Coste equivalente de API · USD',
+  metricCache: 'Caché · lectura + escritura', metricRead: 'Solo lectura de caché', metricWrite: 'Solo escritura de caché',
+  metricInput: 'Solo entrada sin caché', metricOutput: 'Solo salida',
+  read: 'Lectura de caché', write: 'Escritura de caché', input: 'Entrada nueva', output: 'Salida', total: 'Total',
+  tokens: '{n} tokens', requests: '{n} solicitudes',
+  olderWeeks: '← Cuotas anteriores', newerWeeks: 'Cuotas siguientes →', olderDays: '← Días anteriores', newerDays: 'Días siguientes →',
+  page: 'Bloque {page}/{pages} · {start} — {end}',
+  reset: 'Reinicio: {day} a las {time} · {zone}', currentInterval: 'Cuota actual: {interval} · en curso',
+  clippedHelp: 'Los filtros de 7/30 días cortan la primera cuota a medianoche del primer día. * = cuota parcial en el filtro. Todo el historial muestra las cuotas sin este corte.',
+  ongoing: 'En curso', closed: 'Cerrada', partialFilter: 'Parcial en el filtro',
+  modelsDay: 'Modelos de este día', modelsWeek: 'Modelos de esta cuota', modelsPeriod: 'Modelos del periodo',
+  inPeriod: 'En el periodo', modelsOnDate: 'Modelos · {date}', previousModels: '← Modelos', moreModels: 'Más modelos →',
+  fullFilter: '{start} — {end} · todo el filtro', details: '{requests} solicitudes · {tokens} tokens',
+  costPeriod: 'Equivalente API · periodo', costWeek: 'Equivalente API · esta cuota', costDay: 'Equivalente API · este día',
+  periodSubtitle: '{start} → {end} · todos los días del filtro',
+  export: 'Exportar CSV', light: '☼ Claro', dark: '◐ Oscuro', settings: 'Configuración', closeSettings: 'Cerrar configuración', diagnostics: 'Diagnóstico',
+  settingsSaved: 'La configuración de este panel se guarda entre sesiones.', quotaHeading: 'CUOTA SEMANAL',
+  resetDay: 'Día del reinicio', resetTime: 'Hora del reinicio (24 h)', save: 'guardar',
+  resetHelp: 'La agrupación usa la zona horaria indicada, incluidos los cambios de hora. Usa UTC para un reinicio fijo en UTC. Cambiar el reinicio reagrupa el historial local; no cambia el límite real de la cuenta.',
+  timeZone: 'Zona horaria IANA', extraRoots: 'Carpetas extra (separadas por ;)', includeSubagents: 'Incluir subagentes',
+  rootsHelp: 'Las transcripciones son de solo lectura. Las carpetas extra pueden combinar equipos o perfiles; no se filtra automáticamente por cuenta.',
+  languageHeading: 'IDIOMA', languageStatus: 'Idioma: {locale} · sigue a Claude Code',
+  languageHelp: 'Se lee de la opción language de Claude Code, no del idioma de tus mensajes. El mod no guarda una preferencia de idioma aparte.',
+  languageDefault: 'Claude Code no tiene un idioma explícito; se usa inglés.',
+  languageFallback: 'Esta versión no tiene traducción para «{language}»; se usa inglés.',
+  languageUnavailable: 'La configuración de Claude Code no está disponible. Se mantiene el último idioma detectado; una sesión nueva empieza en inglés.',
+  pricingHeading: 'COSTE EQUIVALENTE DE API',
+  pricingHelp: 'Tarifas oficiales estándar en USD, verificadas el {date}. El historial se valora con estas tarifas; no es una factura ni la cuota de la suscripción.',
+  ttlHelp: 'La escritura de caché usa la tarifa de 5 min / 1 h cuando el registro indica el TTL. En caso contrario se muestra un intervalo, sin asumir 5 min.',
+  exclusions: 'Excluye impuestos, Fast mode, descuentos Batch/contractuales, recargos regionales y tasas de herramientas. Los modelos sin tarifas verificadas se señalan y no usan el precio de otro modelo.',
+  diagnosticsHeading: 'DIAGNÓSTICO', diagnosticsPricing: 'Tarifas API: {date} · estado: {status} · tokens sin precio: {tokens}',
+  diagnosticsModel: 'Precio incompleto: {model} · {tokens} tokens', nodePending: 'por localizar',
+  diagnosticsNode: 'Node: {node} · zona: {zone}', diagnosticsReset: 'Reinicio: {day} {time} · cuotas indexadas: {count}',
+  diagnosticsFiles: 'Archivos: {found} encontrados · {indexed} indexados · {archived} eliminados en origen',
+  diagnosticsDuplicates: 'Duplicados entre archivos: {duplicates} · JSON no válido: {malformed} · líneas >32 MiB: {oversized}',
+  diagnosticsRecords: 'Identidad UUID alternativa: {weak} · registros futuros ignorados: {future} · solicitudes de subagentes: {agents}',
+  source: 'Origen: {path}', index: 'Índice: {path}', technicalError: 'Detalle técnico: {detail}',
+  updated: 'Actualizado: {date} · actualización automática cada 30 s con el panel abierto',
+  historyHelp: 'Historial de este perfil local, no facturación global de la cuenta. No incluye automáticamente otros dispositivos ni conversaciones de claude.ai.',
+  categoriesHelp: 'Lectura = caché leída · Escritura = caché creada · Entrada = entrada sin caché · Salida = respuesta generada. Aciertos de caché = lectura ÷ (lectura + escritura + entrada).',
+  errorSave: 'No se pudieron guardar las preferencias.', errorLimits: 'Los límites oficiales no están disponibles en esta sesión.',
+  errorNode: 'No se encontró Node.js 20+ o su ejecución está bloqueada. Indica la ruta completa a node.exe (o node) en Configuración.',
+  errorJson: 'El indexador no devolvió JSON válido. Comprueba el ejecutable Node y la instalación del plugin.',
+  errorIndexer: 'El indexador falló. Consulta el detalle técnico en Diagnóstico.', errorResponse: 'Respuesta del indexador incompatible.',
+  exportBusy: 'Hay una actualización en curso. Exporta cuando termine.', exportSaved: 'CSV guardado en: {path}',
+  exportRetry: 'Otra sesión está indexando. Repite la exportación después de la actualización.',
+  errorResetDay: 'Día de reinicio no válido.', errorResetTime: 'Hora de reinicio no válida. Usa HH:mm, por ejemplo 20:00.',
+  errorTimeZone: 'Zona horaria no válida. Ejemplo: Europe/Lisbon',
+  errorResetConfig: 'Configuración de reinicio no válida; restaurada al jueves a las 20:00, Europe/Lisbon.',
+  commandOptions: 'Opciones: /account-stats [quota|weeks|7d|30d|all|settings|refresh|close]',
+  loggedOut: 'Sesión cerrada. El historial local puede incluir otras cuentas usadas en este perfil.',
+  updateFailed: 'No se pudo actualizar', indexBusy: 'Otra sesión está actualizando el índice. Se muestra el último resultado disponible.',
+  importPartial: 'Importación parcial · quedan {n} archivos. Los totales aún pueden aumentar.',
+  loadingTitle: 'Leyendo tu historial', loadingHelp: 'La primera carga indexa los archivos locales. No se envía contenido a ningún servidor.',
+  preparingTitle: 'Preparando las cuotas semanales', preparingHelp: 'El historial se reagrupa con el reinicio configurado. No se muestran totales de otra configuración.',
+  emptyTitle: 'Aún no hay historial disponible', emptyHelp: 'No se encontraron registros de tokens. Comprueba las carpetas en Diagnóstico o añade una en Configuración.',
+  headerTagline: 'Tu uso, a tu ritmo.', localPrivate: 'Local · privado', headerUpdating: 'Actualizando', headerAlt: 'Account Stats. Historial local y privado.',
+  rangeQuota: 'ESTA CUOTA · EN CURSO', rangeAll: 'TODO EL HISTORIAL', range7: 'ÚLTIMOS 7 DÍAS', range30: 'ÚLTIMOS 30 DÍAS',
+  cacheReuse: 'REUTILIZACIÓN DE CACHÉ', activeRequests: '{days} días activos · {requests} solicitudes',
+  overviewAlt: 'Periodo del {start} al {end}. Total {total}; lectura de caché {read}, escritura de caché {write}, entrada nueva {input}, salida {output}.',
+  chartCostWeek: 'Coste API por cuota', chartCostDay: 'Coste API por día', chartWeeks: 'Cuotas semanales', chartDays: 'Actividad diaria',
+  chartPricing: 'Equivalente estándar · USD · tarifas {date}', chartStarts: 'Inicio de las cuotas · {zone}',
+  quotaCount: '{n} CUOTAS', quotaOne: '1 CUOTA', dayCount: '{n} DÍAS', dayOne: '1 DÍA',
+  chartUncertainty: 'Parte translúcida = TTL desconocido · ? = tokens sin precio',
+  chartCostAlt: 'Gráfico API estándar en USD {grouping}. {values}.',
+  chartTokenAlt: 'Gráfico {grouping} del {start} al {end}. {values}. El selector {selector} muestra el detalle por modelo.',
+  groupingWeek: 'por cuota semanal', groupingDay: 'por día', incompletePrice: 'precio incompleto',
+  noUsage: 'No se registró uso en este intervalo.', partial: 'parcial',
+  modelAlt: '{model}: lectura de caché {read}, escritura de caché {write}, entrada {input}, salida {output}; equivalente API USD {cost} ({status})',
+  costUnavailable: 'Sin tarifa verificada', costPartial: 'Subtotal con precios conocidos', costRange: 'Intervalo estimado · TTL desconocido',
+  costEstimated: 'Estimación · no es un cargo', costEmpty: 'Sin uso en este intervalo', unpriced: 'Sin precio',
+  costNote: 'API estándar · tarifas {date} · sin impuestos / extras',
+  costUnpriced: '{tokens} tokens sin precio, excluidos de este subtotal.', costUnknownTtl: 'Sin TTL: mínimo de 5 min; máximo de 1 h.',
+  costAlt: 'Equivalente API · {title}. {subtitle}. USD {amount}. Lectura de caché {read}; escritura de caché {write}; entrada nueva {input}; salida {output}. {badge}. {tokens} tokens sin precio. Tarifas estándar {date}, sin impuestos ni tasas adicionales.',
+  selectedQuota: 'CUOTA SELECCIONADA', currentQuota: 'CUOTA ACTUAL', boundaries: 'inicio incluido, fin excluido',
+  totalFilter: 'Total en el filtro', fourCategories: '4 categorías de tokens', clippedNote: 'Parcial: solo los días incluidos en el filtro seleccionado.',
+  cycleAlt: 'Cuota {interval}, {zone}. {state}. {partial}Total {total}, lectura de caché {read}, escritura de caché {write}, entrada nueva {input}, salida {output}. Total = lectura + escritura + entrada nueva + salida. Inicio incluido; fin excluido.',
+  limitsTitle: 'Límites de la cuenta', limitsHelp: 'Datos de Claude · separados de los totales locales', limitsUnavailable: 'No disponibles en esta sesión o tipo de cuenta.',
+  fiveHour: 'Ventana de 5 horas', sevenDay: 'Ventana de 7 días', sonnet7: 'Sonnet · 7 días', opus7: 'Opus · 7 días', usage: 'Uso',
+  toConfirm: 'por confirmar', renews: 'Se reinicia: {date}', limitsAlt: 'Límites de la cuenta no disponibles.',
+  previewTitle: 'Account Stats — demostración', previewBanner: 'DEMOSTRACIÓN · DATOS FICTICIOS',
+  previewHelp: 'SVG del plugin real. Controles simulados en el navegador; no es una captura de Claude Desktop.', previewFrame: 'Vista previa interactiva',
+  previewLanguage: 'Idioma simulado de Claude Code', previewNoFile: 'DEMOSTRACIÓN — no se ha creado ningún archivo real',
+};
+
+
+// lib/locales/fr.js
+const fr = {
+  command: 'Ouvrir les statistiques locales et les limites du compte',
+  all: 'Tout l’historique', days7: '7 jours', days30: '30 jours', thisQuota: 'Ce quota',
+  refreshing: 'Mise à jour…', refresh: 'Actualiser', byDay: 'Par jour', byWeek: 'Par quota hebdomadaire',
+  model: 'Modèle', allModels: 'Tous les modèles', chart: 'Graphique', day: 'Jour', week: 'Quota hebdomadaire',
+  metricTotal: 'Total · lecture + écriture + entrée + sortie', metricCost: 'Coût équivalent API · USD',
+  metricCache: 'Cache · lecture + écriture', metricRead: 'Lecture du cache uniquement', metricWrite: 'Écriture du cache uniquement',
+  metricInput: 'Entrée hors cache uniquement', metricOutput: 'Sortie uniquement',
+  read: 'Lecture cache', write: 'Écriture cache', input: 'Entrée hors cache', output: 'Sortie', total: 'Total',
+  tokens: '{n} tokens', requests: '{n} requêtes',
+  olderWeeks: '← Quotas précédents', newerWeeks: 'Quotas suivants →', olderDays: '← Jours précédents', newerDays: 'Jours suivants →',
+  page: 'Page {page}/{pages} · {start} — {end}',
+  reset: 'Réinitialisation : {day} à {time} · {zone}', currentInterval: 'Quota actuel : {interval} · en cours',
+  clippedHelp: 'Les filtres de 7/30 jours coupent le premier quota à minuit le premier jour. * = quota partiel dans le filtre. Tout l’historique affiche les quotas sans cette coupure.',
+  ongoing: 'En cours', closed: 'Terminé', partialFilter: 'Partiel dans le filtre',
+  modelsDay: 'Modèles de ce jour', modelsWeek: 'Modèles de ce quota', modelsPeriod: 'Modèles sur la période',
+  inPeriod: 'Sur la période', modelsOnDate: 'Modèles · {date}', previousModels: '← Modèles', moreModels: 'Autres modèles →',
+  fullFilter: '{start} — {end} · filtre complet', details: '{requests} requêtes · {tokens} tokens',
+  costPeriod: 'Équivalent API · période', costWeek: 'Équivalent API · ce quota', costDay: 'Équivalent API · ce jour',
+  periodSubtitle: '{start} → {end} · tous les jours du filtre',
+  export: 'Exporter CSV', light: '☼ Clair', dark: '◐ Sombre', settings: 'Paramètres', closeSettings: 'Fermer les paramètres', diagnostics: 'Diagnostic',
+  settingsSaved: 'Les paramètres de ce panneau sont conservés entre les sessions.', quotaHeading: 'QUOTA HEBDOMADAIRE',
+  resetDay: 'Jour de réinitialisation', resetTime: 'Heure de réinitialisation (24 h)', save: 'enregistrer',
+  resetHelp: 'Le regroupement suit le fuseau ci-dessous, avec les changements d’heure. Utilisez UTC pour une heure fixe en UTC. Modifier la réinitialisation regroupe l’historique local ; cela ne change pas la limite réelle du compte.',
+  timeZone: 'Fuseau horaire IANA', extraRoots: 'Dossiers supplémentaires (séparés par ;)', includeSubagents: 'Inclure les sous-agents',
+  rootsHelp: 'Les transcriptions sont en lecture seule. Les dossiers peuvent réunir plusieurs machines ou profils ; aucun filtrage automatique par compte n’est effectué.',
+  languageHeading: 'LANGUE', languageStatus: 'Langue : {locale} · suit Claude Code',
+  languageHelp: 'Lue depuis le paramètre language de Claude Code, et non depuis vos messages. Le mod ne conserve pas de préférence linguistique distincte.',
+  languageDefault: 'Claude Code n’a pas de langue explicitement définie ; l’anglais est utilisé.',
+  languageFallback: 'Aucune traduction pour « {language} » dans cette version ; l’anglais est utilisé.',
+  languageUnavailable: 'Les paramètres de Claude Code sont indisponibles. La dernière langue détectée est conservée ; une nouvelle session démarre en anglais.',
+  pricingHeading: 'COÛT ÉQUIVALENT API',
+  pricingHelp: 'Tarifs officiels standard en USD, vérifiés le {date}. L’historique est évalué à ces tarifs ; il ne s’agit ni d’une facture ni du quota de l’abonnement.',
+  ttlHelp: 'L’écriture du cache utilise le tarif 5 min / 1 h lorsque le journal indique le TTL. Sinon, une fourchette est affichée, sans supposer 5 min.',
+  exclusions: 'Exclut taxes, Fast mode, remises Batch/contractuelles, suppléments régionaux et frais d’outils. Les modèles sans tarif vérifié sont signalés et n’utilisent pas le prix d’un autre modèle.',
+  diagnosticsHeading: 'DIAGNOSTIC', diagnosticsPricing: 'Tarifs API : {date} · état : {status} · tokens sans prix : {tokens}',
+  diagnosticsModel: 'Tarification incomplète : {model} · {tokens} tokens', nodePending: 'non localisé',
+  diagnosticsNode: 'Node : {node} · fuseau : {zone}', diagnosticsReset: 'Réinitialisation : {day} {time} · quotas indexés : {count}',
+  diagnosticsFiles: 'Fichiers : {found} trouvés · {indexed} indexés · {archived} supprimés à la source',
+  diagnosticsDuplicates: 'Doublons entre fichiers : {duplicates} · JSON invalide : {malformed} · lignes >32 MiB : {oversized}',
+  diagnosticsRecords: 'Identité UUID de secours : {weak} · enregistrements futurs ignorés : {future} · requêtes des sous-agents : {agents}',
+  source: 'Source : {path}', index: 'Index : {path}', technicalError: 'Détail technique : {detail}',
+  updated: 'Mise à jour : {date} · actualisation automatique toutes les 30 s avec le panneau ouvert',
+  historyHelp: 'Historique de ce profil local, pas la facturation globale du compte. Les autres appareils et conversations claude.ai ne sont pas inclus automatiquement.',
+  categoriesHelp: 'Lecture = cache lu · Écriture = cache créé · Entrée = entrée hors cache · Sortie = réponse générée. Taux de cache = lecture ÷ (lecture + écriture + entrée).',
+  errorSave: 'Impossible d’enregistrer les préférences.', errorLimits: 'Les limites officielles sont indisponibles dans cette session.',
+  errorNode: 'Node.js 20+ est introuvable ou son exécution est bloquée. Indiquez le chemin complet de node.exe (ou node) dans Paramètres.',
+  errorJson: 'L’indexeur n’a pas renvoyé de JSON valide. Vérifiez Node et l’installation du plugin.',
+  errorIndexer: 'L’indexeur a échoué. Consultez le détail technique dans Diagnostic.', errorResponse: 'Réponse de l’indexeur incompatible.',
+  exportBusy: 'Une mise à jour est en cours. Exportez après sa fin.', exportSaved: 'CSV enregistré dans : {path}',
+  exportRetry: 'Une autre session indexe les données. Réessayez l’exportation après la mise à jour.',
+  errorResetDay: 'Jour de réinitialisation invalide.', errorResetTime: 'Heure invalide. Utilisez HH:mm, par exemple 20:00.',
+  errorTimeZone: 'Fuseau horaire invalide. Exemple : Europe/Lisbon',
+  errorResetConfig: 'Configuration de réinitialisation invalide ; rétablie au jeudi à 20:00, Europe/Lisbon.',
+  commandOptions: 'Options : /account-stats [quota|weeks|7d|30d|all|settings|refresh|close]',
+  loggedOut: 'Déconnexion effectuée. L’historique local peut inclure d’autres comptes utilisés dans ce profil.',
+  updateFailed: 'Échec de la mise à jour', indexBusy: 'Une autre session actualise l’index. Affichage du dernier résultat disponible.',
+  importPartial: 'Importation partielle · {n} fichiers restants. Les totaux peuvent encore augmenter.',
+  loadingTitle: 'Lecture de votre historique', loadingHelp: 'Le premier chargement indexe les fichiers locaux. Aucun contenu n’est envoyé à un serveur.',
+  preparingTitle: 'Préparation des quotas hebdomadaires', preparingHelp: 'L’historique est regroupé selon votre réinitialisation. Les totaux d’une autre configuration ne sont pas affichés.',
+  emptyTitle: 'Aucun historique disponible', emptyHelp: 'Aucun enregistrement de tokens trouvé. Vérifiez les dossiers dans Diagnostic ou ajoutez-en un dans Paramètres.',
+  headerTagline: 'Votre usage, à votre rythme.', localPrivate: 'Local · privé', headerUpdating: 'Mise à jour', headerAlt: 'Account Stats. Historique local et privé.',
+  rangeQuota: 'CE QUOTA · EN COURS', rangeAll: 'TOUT L’HISTORIQUE', range7: '7 DERNIERS JOURS', range30: '30 DERNIERS JOURS',
+  cacheReuse: 'RÉUTILISATION DU CACHE', activeRequests: '{days} jours actifs · {requests} requêtes',
+  overviewAlt: 'Période du {start} au {end}. Total {total} ; lecture cache {read}, écriture cache {write}, entrée hors cache {input}, sortie {output}.',
+  chartCostWeek: 'Coût API par quota', chartCostDay: 'Coût API par jour', chartWeeks: 'Quotas hebdomadaires', chartDays: 'Activité quotidienne',
+  chartPricing: 'Équivalent standard · USD · tarifs {date}', chartStarts: 'Début des quotas · {zone}',
+  quotaCount: '{n} QUOTAS', quotaOne: '1 QUOTA', dayCount: '{n} JOURS', dayOne: '1 JOUR',
+  chartUncertainty: 'Sommet translucide = TTL inconnu · ? = tokens sans prix',
+  chartCostAlt: 'Graphique API standard en USD {grouping}. {values}.',
+  chartTokenAlt: 'Graphique {grouping} du {start} au {end}. {values}. Le sélecteur {selector} affiche le détail par modèle.',
+  groupingWeek: 'par quota hebdomadaire', groupingDay: 'par jour', incompletePrice: 'tarification incomplète',
+  noUsage: 'Aucun usage enregistré dans cet intervalle.', partial: 'partiel',
+  modelAlt: '{model} : lecture cache {read}, écriture cache {write}, entrée {input}, sortie {output} ; équivalent API USD {cost} ({status})',
+  costUnavailable: 'Aucun tarif vérifié', costPartial: 'Sous-total aux prix connus', costRange: 'Fourchette estimée · TTL inconnu',
+  costEstimated: 'Estimation · pas une facturation', costEmpty: 'Aucun usage dans cet intervalle', unpriced: 'Sans prix',
+  costNote: 'API standard · tarifs {date} · hors taxes / suppléments',
+  costUnpriced: '{tokens} tokens sans prix, exclus de ce sous-total.', costUnknownTtl: 'TTL absent : minimum 5 min ; maximum 1 h.',
+  costAlt: 'Équivalent API · {title}. {subtitle}. USD {amount}. Lecture cache {read} ; écriture cache {write} ; entrée hors cache {input} ; sortie {output}. {badge}. {tokens} tokens sans prix. Tarifs standard {date}, hors taxes et frais supplémentaires.',
+  selectedQuota: 'QUOTA SÉLECTIONNÉ', currentQuota: 'QUOTA ACTUEL', boundaries: 'début inclus, fin exclue',
+  totalFilter: 'Total dans le filtre', fourCategories: '4 catégories de tokens', clippedNote: 'Partiel : uniquement les jours couverts par le filtre.',
+  cycleAlt: 'Quota {interval}, {zone}. {state}. {partial}Total {total}, lecture cache {read}, écriture cache {write}, entrée hors cache {input}, sortie {output}. Total = lecture + écriture + entrée hors cache + sortie. Début inclus ; fin exclue.',
+  limitsTitle: 'Limites du compte', limitsHelp: 'Valeurs de Claude · distinctes des totaux locaux', limitsUnavailable: 'Indisponibles pour cette session ou ce type de compte.',
+  fiveHour: 'Fenêtre de 5 heures', sevenDay: 'Fenêtre de 7 jours', sonnet7: 'Sonnet · 7 jours', opus7: 'Opus · 7 jours', usage: 'Usage',
+  toConfirm: 'à confirmer', renews: 'Réinitialisation : {date}', limitsAlt: 'Limites du compte indisponibles.',
+  previewTitle: 'Account Stats — démonstration', previewBanner: 'DÉMONSTRATION · DONNÉES FICTIVES',
+  previewHelp: 'SVG du plugin réel. Contrôles simulés dans le navigateur ; pas une capture de Claude Desktop.', previewFrame: 'Aperçu interactif',
+  previewLanguage: 'Langue simulée de Claude Code', previewNoFile: 'DÉMONSTRATION — aucun fichier réel créé',
+};
+
+
+// lib/locales/de.js
+const de = {
+  command: 'Lokale Statistiken und Kontolimits öffnen',
+  all: 'Gesamter Verlauf', days7: '7 Tage', days30: '30 Tage', thisQuota: 'Dieses Kontingent',
+  refreshing: 'Aktualisierung…', refresh: 'Aktualisieren', byDay: 'Nach Tag', byWeek: 'Nach Wochenkontingent',
+  model: 'Modell', allModels: 'Alle Modelle', chart: 'Diagramm', day: 'Tag', week: 'Wochenkontingent',
+  metricTotal: 'Gesamt · Lesen + Schreiben + Eingabe + Ausgabe', metricCost: 'API-Vergleichskosten · USD',
+  metricCache: 'Cache · Lesen + Schreiben', metricRead: 'Nur Cache-Lesen', metricWrite: 'Nur Cache-Schreiben',
+  metricInput: 'Nur neue Eingabe', metricOutput: 'Nur Ausgabe',
+  read: 'Cache-Lesen', write: 'Cache-Schreiben', input: 'Neue Eingabe', output: 'Ausgabe', total: 'Gesamt',
+  tokens: '{n} Tokens', requests: '{n} Anfragen',
+  olderWeeks: '← Frühere Kontingente', newerWeeks: 'Spätere Kontingente →', olderDays: '← Frühere Tage', newerDays: 'Spätere Tage →',
+  page: 'Seite {page}/{pages} · {start} — {end}',
+  reset: 'Zurücksetzung: {day} um {time} · {zone}', currentInterval: 'Aktuelles Kontingent: {interval} · läuft',
+  clippedHelp: 'Die Filter für 7/30 Tage schneiden das erste Kontingent um Mitternacht am ersten Filtertag ab. * = nur ein Teil des Kontingents. Gesamter Verlauf zeigt die Kontingente ohne diesen Schnitt.',
+  ongoing: 'Läuft', closed: 'Beendet', partialFilter: 'Teil im Filter',
+  modelsDay: 'Modelle an diesem Tag', modelsWeek: 'Modelle im Kontingent', modelsPeriod: 'Modelle im Zeitraum',
+  inPeriod: 'Im Zeitraum', modelsOnDate: 'Modelle · {date}', previousModels: '← Modelle', moreModels: 'Weitere Modelle →',
+  fullFilter: '{start} — {end} · gesamter Filter', details: '{requests} Anfragen · {tokens} Tokens',
+  costPeriod: 'API-Vergleich · Zeitraum', costWeek: 'API-Vergleich · Kontingent', costDay: 'API-Vergleich · dieser Tag',
+  periodSubtitle: '{start} → {end} · alle Tage im Filter',
+  export: 'CSV exportieren', light: '☼ Hell', dark: '◐ Dunkel', settings: 'Einstellungen', closeSettings: 'Einstellungen schließen', diagnostics: 'Diagnose',
+  settingsSaved: 'Die Einstellungen dieses Panels bleiben zwischen Sitzungen gespeichert.', quotaHeading: 'WOCHENKONTINGENT',
+  resetDay: 'Tag der Zurücksetzung', resetTime: 'Uhrzeit (24 h)', save: 'speichern',
+  resetHelp: 'Die Gruppierung folgt der Zeitzone unten, einschließlich Zeitumstellungen. Für eine feste UTC-Zeit UTC wählen. Eine Änderung gruppiert den lokalen Verlauf neu; das tatsächliche Kontolimit bleibt gleich.',
+  timeZone: 'IANA-Zeitzone', extraRoots: 'Zusätzliche Ordner (mit ; trennen)', includeSubagents: 'Unteragenten einschließen',
+  rootsHelp: 'Transkripte werden nur gelesen. Zusätzliche Ordner können Geräte oder Profile zusammenführen; eine automatische Filterung nach Konto erfolgt nicht.',
+  languageHeading: 'SPRACHE', languageStatus: 'Sprache: {locale} · folgt Claude Code',
+  languageHelp: 'Aus der Einstellung language von Claude Code gelesen, nicht aus der Sprache Ihrer Nachrichten. Der Mod speichert keine eigene Spracheinstellung.',
+  languageDefault: 'Claude Code hat keine ausdrücklich gesetzte Sprache; Englisch wird verwendet.',
+  languageFallback: 'Für „{language}“ gibt es in dieser Version keine Übersetzung; Englisch wird verwendet.',
+  languageUnavailable: 'Die Claude-Code-Einstellungen sind nicht verfügbar. Die zuletzt erkannte Sprache bleibt erhalten; neue Sitzungen beginnen auf Englisch.',
+  pricingHeading: 'API-VERGLEICHSKOSTEN',
+  pricingHelp: 'Offizielle Standardtarife in USD, geprüft am {date}. Der Verlauf wird mit diesen Tarifen bewertet; dies ist weder eine Rechnung noch das Abonnementkontingent.',
+  ttlHelp: 'Cache-Schreiben verwendet den Tarif für 5 Min. / 1 Std., wenn das Protokoll die TTL enthält. Sonst wird eine Spanne angezeigt, ohne stillschweigend 5 Min. anzunehmen.',
+  exclusions: 'Ohne Steuern, Fast mode, Batch-/Vertragsrabatte, regionale Zuschläge und Werkzeuggebühren. Modelle ohne bestätigten Tarif werden markiert und erhalten keinen Preis eines anderen Modells.',
+  diagnosticsHeading: 'DIAGNOSE', diagnosticsPricing: 'API-Tarife: {date} · Status: {status} · Tokens ohne Preis: {tokens}',
+  diagnosticsModel: 'Unvollständiger Preis: {model} · {tokens} Tokens', nodePending: 'noch nicht gefunden',
+  diagnosticsNode: 'Node: {node} · Zeitzone: {zone}', diagnosticsReset: 'Zurücksetzung: {day} {time} · indexierte Kontingente: {count}',
+  diagnosticsFiles: 'Dateien: {found} gefunden · {indexed} indexiert · {archived} an der Quelle entfernt',
+  diagnosticsDuplicates: 'Dateiübergreifende Duplikate: {duplicates} · ungültiges JSON: {malformed} · Zeilen >32 MiB: {oversized}',
+  diagnosticsRecords: 'UUID-Ersatzidentität: {weak} · ignorierte zukünftige Einträge: {future} · Unteragentenanfragen: {agents}',
+  source: 'Quelle: {path}', index: 'Index: {path}', technicalError: 'Technisches Detail: {detail}',
+  updated: 'Aktualisiert: {date} · bei geöffnetem Panel automatisch alle 30 s',
+  historyHelp: 'Verlauf dieses lokalen Profils, keine kontoweite Abrechnung. Andere Geräte und claude.ai-Unterhaltungen werden nicht automatisch einbezogen.',
+  categoriesHelp: 'Lesen = Cache gelesen · Schreiben = Cache erstellt · Eingabe = nicht zwischengespeicherte Eingabe · Ausgabe = generierte Ausgabe. Cache-Treffer = Lesen ÷ (Lesen + Schreiben + Eingabe).',
+  errorSave: 'Einstellungen konnten nicht gespeichert werden.', errorLimits: 'Offizielle Limits sind in dieser Sitzung nicht verfügbar.',
+  errorNode: 'Node.js 20+ wurde nicht gefunden oder die Ausführung ist blockiert. In den Einstellungen den vollständigen Pfad zu node.exe (oder node) eingeben.',
+  errorJson: 'Der Indexer hat kein gültiges JSON geliefert. Node und die Plugin-Installation prüfen.',
+  errorIndexer: 'Der Indexer ist fehlgeschlagen. Technisches Detail unter Diagnose.', errorResponse: 'Inkompatible Antwort des Indexers.',
+  exportBusy: 'Eine Aktualisierung läuft. Nach Abschluss exportieren.', exportSaved: 'CSV gespeichert unter: {path}',
+  exportRetry: 'Eine andere Sitzung indexiert. Den Export nach der Aktualisierung wiederholen.',
+  errorResetDay: 'Ungültiger Tag für die Zurücksetzung.', errorResetTime: 'Ungültige Uhrzeit. HH:mm verwenden, zum Beispiel 20:00.',
+  errorTimeZone: 'Ungültige Zeitzone. Beispiel: Europe/Lisbon',
+  errorResetConfig: 'Ungültige Konfiguration; auf Donnerstag um 20:00, Europe/Lisbon, zurückgesetzt.',
+  commandOptions: 'Optionen: /account-stats [quota|weeks|7d|30d|all|settings|refresh|close]',
+  loggedOut: 'Abgemeldet. Der lokale Verlauf kann andere Konten dieses Profils enthalten.',
+  updateFailed: 'Aktualisierung fehlgeschlagen', indexBusy: 'Eine andere Sitzung aktualisiert den Index. Das letzte verfügbare Ergebnis wird angezeigt.',
+  importPartial: 'Teilimport · noch {n} Dateien. Die Summen können weiter steigen.',
+  loadingTitle: 'Verlauf wird gelesen', loadingHelp: 'Beim ersten Laden werden lokale Dateien indexiert. Es werden keine Inhalte an einen Server gesendet.',
+  preparingTitle: 'Wochenkontingente vorbereiten', preparingHelp: 'Der Verlauf wird mit der eingestellten Zurücksetzung neu gruppiert. Summen einer anderen Konfiguration werden nicht angezeigt.',
+  emptyTitle: 'Noch kein Verlauf verfügbar', emptyHelp: 'Keine Token-Einträge gefunden. Ordner unter Diagnose prüfen oder unter Einstellungen hinzufügen.',
+  headerTagline: 'Ihre Nutzung, in Ihrem Tempo.', localPrivate: 'Lokal · privat', headerUpdating: 'Aktualisierung', headerAlt: 'Account Stats. Lokaler, privater Verlauf.',
+  rangeQuota: 'DIESES KONTINGENT · LÄUFT', rangeAll: 'GESAMTER VERLAUF', range7: 'LETZTE 7 TAGE', range30: 'LETZTE 30 TAGE',
+  cacheReuse: 'CACHE-WIEDERVERWENDUNG', activeRequests: '{days} aktive Tage · {requests} Anfragen',
+  overviewAlt: 'Zeitraum {start} bis {end}. Gesamt {total}; Cache-Lesen {read}, Cache-Schreiben {write}, neue Eingabe {input}, Ausgabe {output}.',
+  chartCostWeek: 'API-Kosten je Kontingent', chartCostDay: 'API-Kosten je Tag', chartWeeks: 'Wochenkontingente', chartDays: 'Tägliche Aktivität',
+  chartPricing: 'Standardvergleich · USD · Tarife {date}', chartStarts: 'Kontingentbeginn · {zone}',
+  quotaCount: '{n} KONTINGENTE', quotaOne: '1 KONTINGENT', dayCount: '{n} TAGE', dayOne: '1 TAG',
+  chartUncertainty: 'Transparente Spitze = TTL unbekannt · ? = Tokens ohne Preis',
+  chartCostAlt: 'Standard-API-Diagramm in USD {grouping}. {values}.',
+  chartTokenAlt: 'Diagramm {grouping} von {start} bis {end}. {values}. Die Auswahl {selector} zeigt Details je Modell.',
+  groupingWeek: 'nach Wochenkontingent', groupingDay: 'nach Tag', incompletePrice: 'unvollständiger Preis',
+  noUsage: 'Keine Nutzung in diesem Intervall erfasst.', partial: 'teilweise',
+  modelAlt: '{model}: Cache-Lesen {read}, Cache-Schreiben {write}, Eingabe {input}, Ausgabe {output}; API-Vergleich USD {cost} ({status})',
+  costUnavailable: 'Kein bestätigter Tarif', costPartial: 'Teilsumme mit bekannten Preisen', costRange: 'Geschätzte Spanne · TTL unbekannt',
+  costEstimated: 'Schätzung · keine Abbuchung', costEmpty: 'Keine Nutzung in diesem Intervall', unpriced: 'Ohne Preis',
+  costNote: 'Standard-API · Tarife {date} · ohne Steuern / Extras',
+  costUnpriced: '{tokens} Tokens ohne Preis, nicht in dieser Teilsumme.', costUnknownTtl: 'TTL fehlt: Untergrenze 5 Min.; Obergrenze 1 Std.',
+  costAlt: 'API-Vergleich · {title}. {subtitle}. USD {amount}. Cache-Lesen {read}; Cache-Schreiben {write}; neue Eingabe {input}; Ausgabe {output}. {badge}. {tokens} Tokens ohne Preis. Standardtarife {date}, ohne Steuern und Zusatzgebühren.',
+  selectedQuota: 'GEWÄHLTES KONTINGENT', currentQuota: 'AKTUELLES KONTINGENT', boundaries: 'Beginn inklusive, Ende exklusive',
+  totalFilter: 'Summe im Filter', fourCategories: '4 Token-Kategorien', clippedNote: 'Teilweise: nur die Tage innerhalb des gewählten Filters.',
+  cycleAlt: 'Kontingent {interval}, {zone}. {state}. {partial}Gesamt {total}, Cache-Lesen {read}, Cache-Schreiben {write}, neue Eingabe {input}, Ausgabe {output}. Gesamt = Cache-Lesen + Cache-Schreiben + neue Eingabe + Ausgabe. Beginn inklusive; Ende exklusive.',
+  limitsTitle: 'Kontolimits', limitsHelp: 'Von Claude gemeldet · getrennt von lokalen Summen', limitsUnavailable: 'In dieser Sitzung oder für diesen Kontotyp nicht verfügbar.',
+  fiveHour: '5-Stunden-Fenster', sevenDay: '7-Tage-Fenster', sonnet7: 'Sonnet · 7 Tage', opus7: 'Opus · 7 Tage', usage: 'Nutzung',
+  toConfirm: 'noch zu bestätigen', renews: 'Zurücksetzung: {date}', limitsAlt: 'Kontolimits nicht verfügbar.',
+  previewTitle: 'Account Stats — Demo', previewBanner: 'DEMO · FIKTIVE DATEN',
+  previewHelp: 'Echte Plugin-SVGs. Im Browser simulierte Bedienelemente; kein Claude-Desktop-Screenshot.', previewFrame: 'Interaktive Vorschau',
+  previewLanguage: 'Simulierte Claude-Code-Sprache', previewNoFile: 'DEMO — keine echte Datei erstellt',
+};
+
+
+// lib/locales/it.js
+const it = {
+  command: 'Apri statistiche locali e limiti dell’account',
+  all: 'Tutta la cronologia', days7: '7 giorni', days30: '30 giorni', thisQuota: 'Questa quota',
+  refreshing: 'Aggiornamento…', refresh: 'Aggiorna', byDay: 'Per giorno', byWeek: 'Per quota settimanale',
+  model: 'Modello', allModels: 'Tutti i modelli', chart: 'Grafico', day: 'Giorno', week: 'Quota settimanale',
+  metricTotal: 'Totale · lettura + scrittura + input + output', metricCost: 'Costo equivalente API · USD',
+  metricCache: 'Cache · lettura + scrittura', metricRead: 'Solo lettura cache', metricWrite: 'Solo scrittura cache',
+  metricInput: 'Solo input senza cache', metricOutput: 'Solo output',
+  read: 'Lettura cache', write: 'Scrittura cache', input: 'Input nuovo', output: 'Output', total: 'Totale',
+  tokens: '{n} token', requests: '{n} richieste',
+  olderWeeks: '← Quote precedenti', newerWeeks: 'Quote successive →', olderDays: '← Giorni precedenti', newerDays: 'Giorni successivi →',
+  page: 'Pagina {page}/{pages} · {start} — {end}',
+  reset: 'Reset: {day} alle {time} · {zone}', currentInterval: 'Quota attuale: {interval} · in corso',
+  clippedHelp: 'I filtri di 7/30 giorni tagliano la prima quota a mezzanotte del primo giorno. * = quota parziale nel filtro. Tutta la cronologia mostra le quote senza questo taglio.',
+  ongoing: 'In corso', closed: 'Conclusa', partialFilter: 'Parziale nel filtro',
+  modelsDay: 'Modelli di questo giorno', modelsWeek: 'Modelli di questa quota', modelsPeriod: 'Modelli nel periodo',
+  inPeriod: 'Nel periodo', modelsOnDate: 'Modelli · {date}', previousModels: '← Modelli', moreModels: 'Altri modelli →',
+  fullFilter: '{start} — {end} · intero filtro', details: '{requests} richieste · {tokens} token',
+  costPeriod: 'Equivalente API · periodo', costWeek: 'Equivalente API · questa quota', costDay: 'Equivalente API · questo giorno',
+  periodSubtitle: '{start} → {end} · tutti i giorni del filtro',
+  export: 'Esporta CSV', light: '☼ Chiaro', dark: '◐ Scuro', settings: 'Impostazioni', closeSettings: 'Chiudi impostazioni', diagnostics: 'Diagnostica',
+  settingsSaved: 'Le impostazioni del pannello vengono conservate tra le sessioni.', quotaHeading: 'QUOTA SETTIMANALE',
+  resetDay: 'Giorno del reset', resetTime: 'Ora del reset (24 h)', save: 'salva',
+  resetHelp: 'Il raggruppamento segue il fuso sottostante, inclusi i cambi d’ora. Usa UTC per un reset fisso in UTC. Cambiare il reset raggruppa di nuovo la cronologia locale; non cambia il limite effettivo dell’account.',
+  timeZone: 'Fuso orario IANA', extraRoots: 'Cartelle extra (separate da ;)', includeSubagents: 'Includi sottoagenti',
+  rootsHelp: 'Le trascrizioni sono di sola lettura. Le cartelle extra possono combinare dispositivi o profili; non è previsto un filtro automatico per account.',
+  languageHeading: 'LINGUA', languageStatus: 'Lingua: {locale} · segue Claude Code',
+  languageHelp: 'Letta dall’impostazione language di Claude Code, non dalla lingua dei messaggi. Il mod non salva una preferenza di lingua separata.',
+  languageDefault: 'Claude Code non ha una lingua esplicita; viene usato l’inglese.',
+  languageFallback: 'Questa versione non ha una traduzione per «{language}»; viene usato l’inglese.',
+  languageUnavailable: 'Le impostazioni di Claude Code non sono disponibili. Viene mantenuta l’ultima lingua rilevata; una nuova sessione inizia in inglese.',
+  pricingHeading: 'COSTO EQUIVALENTE API',
+  pricingHelp: 'Tariffe ufficiali standard in USD, verificate il {date}. La cronologia è valutata a queste tariffe; non è una fattura né la quota dell’abbonamento.',
+  ttlHelp: 'La scrittura cache usa la tariffa di 5 min / 1 h quando il registro indica il TTL. Altrimenti viene mostrato un intervallo, senza presumere 5 min.',
+  exclusions: 'Esclude imposte, Fast mode, sconti Batch/contrattuali, supplementi regionali e costi degli strumenti. I modelli senza tariffa verificata vengono segnalati e non usano il prezzo di un altro modello.',
+  diagnosticsHeading: 'DIAGNOSTICA', diagnosticsPricing: 'Tariffe API: {date} · stato: {status} · token senza prezzo: {tokens}',
+  diagnosticsModel: 'Prezzo incompleto: {model} · {tokens} token', nodePending: 'da individuare',
+  diagnosticsNode: 'Node: {node} · fuso: {zone}', diagnosticsReset: 'Reset: {day} {time} · quote indicizzate: {count}',
+  diagnosticsFiles: 'File: {found} trovati · {indexed} indicizzati · {archived} rimossi all’origine',
+  diagnosticsDuplicates: 'Duplicati tra file: {duplicates} · JSON non valido: {malformed} · righe >32 MiB: {oversized}',
+  diagnosticsRecords: 'Identità UUID alternativa: {weak} · record futuri ignorati: {future} · richieste dei sottoagenti: {agents}',
+  source: 'Origine: {path}', index: 'Indice: {path}', technicalError: 'Dettaglio tecnico: {detail}',
+  updated: 'Aggiornato: {date} · aggiornamento automatico ogni 30 s con il pannello aperto',
+  historyHelp: 'Cronologia di questo profilo locale, non fatturazione globale dell’account. Non include automaticamente altri dispositivi o conversazioni di claude.ai.',
+  categoriesHelp: 'Lettura = cache letta · Scrittura = cache creata · Input = input senza cache · Output = risposta generata. Utilizzo cache = lettura ÷ (lettura + scrittura + input).',
+  errorSave: 'Impossibile salvare le preferenze.', errorLimits: 'I limiti ufficiali non sono disponibili in questa sessione.',
+  errorNode: 'Node.js 20+ non trovato o esecuzione bloccata. Inserisci il percorso completo di node.exe (o node) in Impostazioni.',
+  errorJson: 'L’indicizzatore non ha restituito JSON valido. Controlla Node e l’installazione del plugin.',
+  errorIndexer: 'Errore dell’indicizzatore. Consulta il dettaglio tecnico in Diagnostica.', errorResponse: 'Risposta dell’indicizzatore incompatibile.',
+  exportBusy: 'Aggiornamento in corso. Esporta al termine.', exportSaved: 'CSV salvato in: {path}',
+  exportRetry: 'Un’altra sessione sta indicizzando. Riprova l’esportazione dopo l’aggiornamento.',
+  errorResetDay: 'Giorno del reset non valido.', errorResetTime: 'Ora del reset non valida. Usa HH:mm, ad esempio 20:00.',
+  errorTimeZone: 'Fuso orario non valido. Esempio: Europe/Lisbon',
+  errorResetConfig: 'Configurazione del reset non valida; ripristinata a giovedì alle 20:00, Europe/Lisbon.',
+  commandOptions: 'Opzioni: /account-stats [quota|weeks|7d|30d|all|settings|refresh|close]',
+  loggedOut: 'Disconnessione effettuata. La cronologia locale può includere altri account usati in questo profilo.',
+  updateFailed: 'Impossibile aggiornare', indexBusy: 'Un’altra sessione sta aggiornando l’indice. Viene mostrato l’ultimo risultato disponibile.',
+  importPartial: 'Importazione parziale · {n} file rimanenti. I totali possono ancora aumentare.',
+  loadingTitle: 'Lettura della cronologia', loadingHelp: 'Il primo caricamento indicizza i file locali. Nessun contenuto viene inviato a un server.',
+  preparingTitle: 'Preparazione delle quote settimanali', preparingHelp: 'La cronologia viene raggruppata con il reset configurato. Non vengono mostrati totali di un’altra configurazione.',
+  emptyTitle: 'Nessuna cronologia disponibile', emptyHelp: 'Nessun record di token trovato. Controlla le cartelle in Diagnostica o aggiungine una in Impostazioni.',
+  headerTagline: 'Il tuo utilizzo, al tuo ritmo.', localPrivate: 'Locale · privato', headerUpdating: 'Aggiornamento', headerAlt: 'Account Stats. Cronologia locale e privata.',
+  rangeQuota: 'QUESTA QUOTA · IN CORSO', rangeAll: 'TUTTA LA CRONOLOGIA', range7: 'ULTIMI 7 GIORNI', range30: 'ULTIMI 30 GIORNI',
+  cacheReuse: 'RIUTILIZZO DELLA CACHE', activeRequests: '{days} giorni attivi · {requests} richieste',
+  overviewAlt: 'Periodo dal {start} al {end}. Totale {total}; lettura cache {read}, scrittura cache {write}, input nuovo {input}, output {output}.',
+  chartCostWeek: 'Costo API per quota', chartCostDay: 'Costo API per giorno', chartWeeks: 'Quote settimanali', chartDays: 'Attività giornaliera',
+  chartPricing: 'Equivalente standard · USD · tariffe {date}', chartStarts: 'Inizio delle quote · {zone}',
+  quotaCount: '{n} QUOTE', quotaOne: '1 QUOTA', dayCount: '{n} GIORNI', dayOne: '1 GIORNO',
+  chartUncertainty: 'Parte traslucida = TTL ignoto · ? = token senza prezzo',
+  chartCostAlt: 'Grafico API standard in USD {grouping}. {values}.',
+  chartTokenAlt: 'Grafico {grouping} dal {start} al {end}. {values}. Il selettore {selector} mostra i dettagli per modello.',
+  groupingWeek: 'per quota settimanale', groupingDay: 'per giorno', incompletePrice: 'prezzo incompleto',
+  noUsage: 'Nessun utilizzo registrato in questo intervallo.', partial: 'parziale',
+  modelAlt: '{model}: lettura cache {read}, scrittura cache {write}, input {input}, output {output}; equivalente API USD {cost} ({status})',
+  costUnavailable: 'Nessuna tariffa verificata', costPartial: 'Subtotale con prezzi noti', costRange: 'Intervallo stimato · TTL ignoto',
+  costEstimated: 'Stima · non è un addebito', costEmpty: 'Nessun utilizzo nell’intervallo', unpriced: 'Senza prezzo',
+  costNote: 'API standard · tariffe {date} · senza imposte / extra',
+  costUnpriced: '{tokens} token senza prezzo, esclusi dal subtotale.', costUnknownTtl: 'TTL assente: minimo 5 min; massimo 1 h.',
+  costAlt: 'Equivalente API · {title}. {subtitle}. USD {amount}. Lettura cache {read}; scrittura cache {write}; input nuovo {input}; output {output}. {badge}. {tokens} token senza prezzo. Tariffe standard {date}, senza imposte e costi aggiuntivi.',
+  selectedQuota: 'QUOTA SELEZIONATA', currentQuota: 'QUOTA ATTUALE', boundaries: 'inizio incluso, fine esclusa',
+  totalFilter: 'Totale nel filtro', fourCategories: '4 categorie di token', clippedNote: 'Parziale: solo i giorni compresi nel filtro selezionato.',
+  cycleAlt: 'Quota {interval}, {zone}. {state}. {partial}Totale {total}, lettura cache {read}, scrittura cache {write}, input nuovo {input}, output {output}. Totale = lettura + scrittura + input nuovo + output. Inizio incluso; fine esclusa.',
+  limitsTitle: 'Limiti dell’account', limitsHelp: 'Valori di Claude · separati dai totali locali', limitsUnavailable: 'Non disponibili per questa sessione o tipo di account.',
+  fiveHour: 'Finestra di 5 ore', sevenDay: 'Finestra di 7 giorni', sonnet7: 'Sonnet · 7 giorni', opus7: 'Opus · 7 giorni', usage: 'Utilizzo',
+  toConfirm: 'da confermare', renews: 'Si rinnova: {date}', limitsAlt: 'Limiti dell’account non disponibili.',
+  previewTitle: 'Account Stats — dimostrazione', previewBanner: 'DIMOSTRAZIONE · DATI FITTIZI',
+  previewHelp: 'SVG del plugin reale. Controlli simulati nel browser; non è una schermata di Claude Desktop.', previewFrame: 'Anteprima interattiva',
+  previewLanguage: 'Lingua simulata di Claude Code', previewNoFile: 'DIMOSTRAZIONE — nessun file reale creato',
+};
+
+
+// lib/i18n.js
+/** Pure presentation-only i18n. No DOM, Node, host, network or mutable locale. */
+
+
+
+
+
+
+
+const CATALOGUES = Object.freeze({ en, 'pt-PT': ptPT, 'pt-BR': ptBR, es, fr, de, it });
+const aliases = {
+  'brazilian portuguese':'pt-BR', 'portuguese (brazil)':'pt-BR', 'português (brasil)':'pt-BR',
+  'português brasileiro':'pt-BR', 'portugues brasileiro':'pt-BR',
+  spanish:'es-ES', español:'es-ES', espanol:'es-ES', espanhol:'es-ES',
+  french:'fr-FR', français:'fr-FR', francais:'fr-FR', frances:'fr-FR', francês:'fr-FR',
+  german:'de-DE', deutsch:'de-DE', alemão:'de-DE', alemao:'de-DE',
+  italian:'it-IT', italiano:'it-IT',
+  english: 'en-US', 'english (us)': 'en-US', 'american english': 'en-US',
+  'english (uk)': 'en-GB', 'british english': 'en-GB', ingles: 'en-US', inglês: 'en-US',
+  portuguese: 'pt-PT', portugues: 'pt-PT', português: 'pt-PT',
+  'portuguese (portugal)': 'pt-PT', 'português (portugal)': 'pt-PT', 'european portuguese': 'pt-PT',
+  'portugues europeu': 'pt-PT', 'português europeu': 'pt-PT',
+};
+function resolveLanguage(raw) {
+  const language = typeof raw === 'string' ? raw.trim().slice(0,160) : '';
+  if (!language || /^(default|auto|automatic|system)$/i.test(language))
+    return { locale:'en-US', catalogue:'en', reason:'default', language };
+  const lower = language.toLowerCase();
+  const candidate = Object.prototype.hasOwnProperty.call(aliases,lower) ? aliases[lower] : language.replace(/_/g,'-');
+  let locale;
+  try { locale = Intl.getCanonicalLocales(candidate)[0]; } catch { /* Free-form names are legal in Claude settings. */ }
+  if (locale) {
+    if (locale === 'en') locale='en-US';
+    if (locale === 'pt') locale='pt-PT';
+    const base=locale.split('-')[0];
+    const catalogue=base==='pt'?(/-BR(?:-|$)/.test(locale)?'pt-BR':'pt-PT'):Object.prototype.hasOwnProperty.call(CATALOGUES,base)?base:null;
+    if(catalogue) return {locale,catalogue,reason:'configured',language};
+  }
+  return {locale:'en-US',catalogue:'en',reason:'unsupported',language};
+}
+const contexts = new Map();
+const cleanSpaces = text => String(text).replace(/[\u00a0\u202f]/g,' ');
+const safeCount = value => Number.isSafeInteger(value) && value >= 0 ? value : 0;
+function createI18n(language='en-US') {
+  if (language && typeof language === 'object' && typeof language.t === 'function') return language;
+  const resolved=resolveLanguage(language), {locale,catalogue}=resolved;
+  const cacheKey=locale+'|'+catalogue;
+  if(contexts.has(cacheKey)) return contexts.get(cacheKey);
+  const messages=CATALOGUES[catalogue] || en, formats=new Map();
+  const formatter=(kind,options={})=>{
+    const key=kind+JSON.stringify(options);
+    if(!formats.has(key)) {
+      const Type=kind==='number'?Intl.NumberFormat:Intl.DateTimeFormat;
+      formats.set(key,new Type(locale,options));
+    }
+    return formats.get(key);
+  };
+  const t=(key,args={})=>String(messages[key] ?? en[key] ?? key).replace(/\{([A-Za-z][A-Za-z0-9]*)\}/g,
+    (match,name)=>Object.prototype.hasOwnProperty.call(args,name)?String(args[name]):match);
+  const number=(value,options={})=>cleanSpaces(formatter('number',options).format(value));
+  const integer=value=>number(safeCount(value),{maximumFractionDigits:0});
+  const compact=value=>number(safeCount(value),{notation:'compact',maximumFractionDigits:1});
+  const percent=value=>Number.isFinite(value)?number(value,{style:'percent',minimumFractionDigits:1,maximumFractionDigits:1}):'—';
+  const date=(key,short=false)=>{
+    if(typeof key!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(key)) return '—';
+    const value=new Date(key+'T12:00:00Z');
+    if(!Number.isFinite(+value)) return '—';
+    return cleanSpaces(formatter('date',{calendar:'gregory',timeZone:'UTC',day:'2-digit',month:'2-digit',...(short?{}:{year:'numeric'})}).format(value));
+  };
+  const datetime=(value,timeZone='UTC',includeYear=true)=>{
+    const d=new Date(value);
+    if(!Number.isFinite(+d)) return '—';
+    try { return cleanSpaces(formatter('date',{calendar:'gregory',timeZone,day:'2-digit',month:'2-digit',
+      ...(includeYear?{year:'numeric'}:{}),hour:'numeric',minute:'2-digit'}).format(d)); }
+    catch { return '—'; }
+  };
+  const weekday=n=>cleanSpaces(formatter('date',{timeZone:'UTC',weekday:'long'}).format(new Date(Date.UTC(2023,0,1+n,12))));
+  const usd=(n,isCompact=false)=>{
+    if(!Number.isFinite(n)||n<0) return '—';
+    const small=n>0&&n<.0001, value=small?.0001:n;
+    const decimals=value>0&&value<.01?4:2;
+    const options={style:'currency',currency:'USD',...(isCompact&&value>=1000?
+      {notation:'compact',minimumFractionDigits:0,maximumFractionDigits:1}:{minimumFractionDigits:decimals,maximumFractionDigits:decimals})};
+    return (small?'<':'')+number(value,options);
+  };
+  const price=(cost,key='total')=>{
+    if(cost.unpricedTokens&&!cost.pricedTokens) return t('unpriced');
+    const low=cost[key],high=key==='total'?cost.totalMax:key==='write'?cost.writeMax:low;
+    return Math.abs(high-low)>1e-10?usd(low)+' – '+usd(high):usd(low);
+  };
+  const status=key=>t(({unavailable:'costUnavailable',partial:'costPartial',range:'costRange',estimated:'costEstimated',empty:'costEmpty'})[key]||'costUnavailable');
+  const context=Object.freeze({locale,catalogue,t,integer,number,compact,percent,date,datetime,weekday,usd,price,status});
+  // Settings can contain arbitrary strings. Bound cached formatters in long sessions.
+  if(contexts.size>=32) contexts.delete(contexts.keys().next().value);
+  contexts.set(cacheKey,context);return context;
+}
+
+
+// lib/usage.js
+/** Pure, dependency-free token normalization. Never copies prompt or answer text. */
+const METRICS = ['read', 'write', 'input', 'output'];
+const zero = () => ({ read: 0, write: 0, input: 0, output: 0, requests: 0 });
+function count(value) {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : 0;
+}
+function normalizeUsage(usage) {
+  if (!usage || typeof usage !== 'object' || Array.isArray(usage)) return null;
+  const fields = ['cache_read_input_tokens', 'cache_creation_input_tokens', 'input_tokens', 'output_tokens'];
+  const detail = usage.cache_creation;
+  if (!fields.some(k => typeof usage[k] === 'number') && !detail) return null;
+  const write = typeof usage.cache_creation_input_tokens === 'number'
+    ? count(usage.cache_creation_input_tokens)
+    : count(detail?.ephemeral_5m_input_tokens) + count(detail?.ephemeral_1h_input_tokens);
+  const five = count(detail?.ephemeral_5m_input_tokens), hour = count(detail?.ephemeral_1h_input_tokens);
+  return {
+    read: count(usage.cache_read_input_tokens),
+    // The top-level creation count ALREADY includes the 5m and 1h buckets.
+    write,
+    // Retained separately for pricing; NEVER included again in total tokens.
+    write5m: five+hour <= write ? five : 0,
+    write1h: five+hour <= write ? hour : 0,
+    input: count(usage.input_tokens),
+    output: count(usage.output_tokens),
+    requests: 1,
+  };
+}
+function total(value) { return METRICS.reduce((n, k) => n + count(value?.[k]), 0); }
+function add(target, value) {
+  for (const k of [...METRICS, 'requests']) target[k] = count(target[k]) + count(value?.[k]);
+  return target;
+}
+/** Repeated blocks of the SAME response carry cumulative usage, not new requests. */
+function mergeRecord(a, b) {
+  if (!a) return { ...b };
+  const out = { ...a, timestamp: Math.min(a.timestamp, b.timestamp) };
+  for (const k of METRICS) out[k] = Math.max(count(a[k]), count(b[k]));
+  out.write5m = Math.max(count(a.write5m), count(b.write5m));
+  out.write1h = Math.max(count(a.write1h), count(b.write1h));
+  if (out.write5m+out.write1h > out.write) { out.write5m=0; out.write1h=0; }
+  if (a.model === 'unknown' && b.model !== 'unknown') out.model = b.model;
+  // A response copied from a main session into an agent transcript is still main.
+  out.agent = Boolean(a.agent && b.agent);
+  out.weakIdentity = Boolean(a.weakIdentity && b.weakIdentity);
+  return out;
+}
+function parseTranscriptRow(row, source = '') {
+  if (!row || row.type !== 'assistant' || row.isApiErrorMessage === true) return null;
+  const message = row.message;
+  if (!message || (message.role && message.role !== 'assistant')) return null;
+  const usage = normalizeUsage(message.usage);
+  if (!usage) return null;
+  const model = typeof message.model === 'string' && message.model ? message.model : 'unknown';
+  if (model === '<synthetic>' || model === 'synthetic') return null;
+  const timestamp = typeof row.timestamp === 'number' ? row.timestamp : Date.parse(row.timestamp);
+  if (!Number.isFinite(timestamp) || timestamp < 0) return null;
+  // Prefer API message ID globally, NOT session ID: forks and resumed sessions
+  // can contain the same original response. Request IDs and UUIDs are fallbacks.
+  const identity = typeof message.id === 'string' && message.id ? 'message:' + message.id
+    : typeof row.requestId === 'string' && row.requestId ? 'request:' + row.requestId
+    : typeof row.uuid === 'string' && row.uuid ? 'uuid:' + row.uuid : null;
+  if (!identity) return null; // Never invent an identity and silently overcount.
+  const agent = Boolean(row.isSidechain || row.agentId || /(?:^|[\\/])subagents[\\/]|(?:^|[\\/])agent-[^\\/]+\.jsonl$/i.test(source));
+  return { identity, timestamp, model: model.slice(0, 256), agent,
+    weakIdentity: identity.startsWith('uuid:'), ...usage };
+}
+function dayKey(timestamp, timeZone) {
+  const fmt = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' });
+  return dayKeyWithFormatter(timestamp, fmt);
+}
+function dayKeyWithFormatter(timestamp, formatter) {
+  const parts = formatter.formatToParts(new Date(timestamp));
+  const get = type => parts.find(p => p.type === type)?.value;
+  return `${get('year')}-${get('month')}-${get('day')}`;
+}
+function moveDay(day, delta) {
+  const date = new Date(day + 'T12:00:00.000Z');
+  date.setUTCDate(date.getUTCDate() + delta);
+  return date.toISOString().slice(0, 10);
+}
+function daysBetween(from, to) {
+  return Math.round((Date.parse(to + 'T12:00:00Z') - Date.parse(from + 'T12:00:00Z')) / 86400000) + 1;
+}
+function shortNumber(value) {
+  const n = count(value);
+  if (n >= 1e9) return (n / 1e9).toFixed(n >= 1e10 ? 1 : 2) + 'B';
+  if (n >= 1e6) return (n / 1e6).toFixed(n >= 1e7 ? 1 : 2) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(n >= 1e4 ? 1 : 2) + 'k';
+  return String(n);
+}
+function exactNumber(n) { return String(count(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+function modelName(id) {
+  // Display only. Aggregation always retains the exact provider model ID.
+  return String(id).replace(/^claude-/, '').replace(/-20\d{6}$/, '')
+    .replace(/-/g, ' ').replace(/\b(opus|sonnet|haiku|fable)\b/gi, x => x[0].toUpperCase() + x.slice(1))
+    .replace(/(\d) (\d)(?= |$)/g, '$1.$2');
+}
+function escapeXml(text) {
+  return String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[c]));
+}
+
+
+// lib/pricing.js
+/** Current standard first-party API equivalent, not a bill or historical price.
+ * Official sources and scope: docs/PRICING.md. No network or guessed model rates.
+ * Price each de-duplicated request BEFORE aggregating (Haiku 5.5 has a prompt tier).
+ */
+
+const PRICING_DATE = '2026-10-16';
+const PRICING_VERSION = '2026-10-16-standard-v1';
+const PRICING_SOURCE = 'https://platform.claude.com/docs/en/about-claude/pricing';
+// USD per one million tokens. Read multipliers are model-specific, not always 0.1x.
+const rate = (input, output, read) => ({ input, output, read, write5m: input*1.25, write1h: input*2 });
+const API_RATES = Object.freeze({
+  'claude-fable-5-1': rate(10,50,.25),
+  'claude-mythos-5-1': rate(10,50,.25),
+  'claude-fable-5': rate(10,50,1),
+  'claude-mythos-5': rate(10,50,1),
+  'claude-opus-5-5': rate(4,20,.2),
+  'claude-opus-5': rate(5,25,.5),
+  'claude-opus-4-8': rate(5,25,.5),
+  'claude-opus-4-7': rate(5,25,.5),
+  'claude-opus-4-6': rate(5,25,.5),
+  'claude-opus-4-5': rate(5,25,.5),
+  'claude-opus-4-1': rate(15,75,1.5),
+  'claude-opus-4': rate(15,75,1.5),
+  'claude-sonnet-5-5': rate(2,10,.1),
+  'claude-sonnet-5': rate(2,10,.2),
+  'claude-sonnet-4-6': rate(3,15,.3),
+  // Current published standard window is 200k. Do not silently price legacy
+  // long-context beta requests with an unverified tariff.
+  'claude-sonnet-4-5': { ...rate(3,15,.3), maxVerifiedPrompt: 200000 },
+  'claude-sonnet-4': { ...rate(3,15,.3), maxVerifiedPrompt: 200000 },
+  'claude-haiku-5-5': { ...rate(.1,.5,.01), threshold: 100000, long: rate(.5,2.5,.05) },
+  'claude-haiku-4-5': rate(1,5,.1),
+  'claude-haiku-3-5': rate(.8,4,.08),
+});
+function canonicalModel(id) {
+  let value = String(id || '').trim().toLowerCase();
+  value = value.replace(/^(?:(?:global|us|eu|apac)\.)?anthropic\./,'')
+    .replace(/-v\d+:\d+$/,'').replace(/@20\d{6}$/,'').replace(/-20\d{6}$/,'');
+  if (value === 'claude-3-5-haiku') value = 'claude-haiku-3-5';
+  return Object.hasOwn(API_RATES, value) ? value : null;
+}
+const zeroCost = () => ({ read:0, write:0, input:0, output:0, writeMax:0, total:0, totalMax:0,
+  pricedTokens:0, unpricedTokens:0, pricedRequests:0, unpricedRequests:0, unknownWriteTokens:0 });
+function unknownCost(value) {
+  return { ...zeroCost(), unpricedTokens:total(value), unpricedRequests:count(value?.requests) || (total(value) ? 1 : 0) };
+}
+function costOf(value) { return value?.cost || unknownCost(value); }
+const MONEY_FIELDS = new Set(['read','write','input','output','writeMax','total','totalMax']);
+function addMoney(a,b) {
+  // Every published rate has whole-nanodollar token units. No per-call cent rounding.
+  const units=Math.round(a*1e9)+Math.round(b*1e9);
+  return Number.isSafeInteger(units)?units/1e9:a+b;
+}
+function addCost(target, value) {
+  for (const key of Object.keys(target)) {
+    const n = value?.[key];
+    if (typeof n === 'number' && Number.isFinite(n) && n >= 0) target[key] = MONEY_FIELDS.has(key)?addMoney(target[key],n):target[key]+n;
+  }
+  return target;
+}
+/** Add tokens and independently add their already-calculated request costs. */
+function addPriced(target, value) {
+  const prior = target.cost || unknownCost(target);
+  const incoming = costOf(value);
+  add(target,value);
+  target.cost = addCost(prior,incoming);
+  return target;
+}
+function priceRecord(record) {
+  const id = canonicalModel(record.model);
+  const tokens = total(record);
+  if (!tokens) return zeroCost();
+  if (!id) return unknownCost(record);
+  const prompt = count(record.read)+count(record.write)+count(record.input);
+  const base = API_RATES[id];
+  if (base.maxVerifiedPrompt && prompt > base.maxVerifiedPrompt) return unknownCost(record);
+  const r = base.threshold && prompt > base.threshold ? base.long : base;
+  let five = count(record.write5m), hour = count(record.write1h);
+  const writes = count(record.write);
+  // Inconsistent details are unknown, never extra tokens or a negative remainder.
+  if (five+hour > writes) { five=0; hour=0; }
+  const unknown = writes-five-hour;
+  const cost = { ...zeroCost(),
+    read:count(record.read)*r.read/1e6, input:count(record.input)*r.input/1e6, output:count(record.output)*r.output/1e6,
+    write:(five*r.write5m+hour*r.write1h+unknown*r.write5m)/1e6,
+    writeMax:(five*r.write5m+hour*r.write1h+unknown*r.write1h)/1e6,
+    pricedTokens:tokens, pricedRequests:count(record.requests)||1, unknownWriteTokens:unknown };
+  cost.total = cost.read+cost.write+cost.input+cost.output;
+  cost.totalMax = cost.read+cost.writeMax+cost.input+cost.output;
+  for (const key of MONEY_FIELDS) cost[key]=addMoney(0,cost[key]);
+  return cost;
+}
+function costStatus(cost) {
+  if (cost.unpricedTokens && !cost.pricedTokens) return 'unavailable';
+  if (cost.unpricedTokens) return 'partial';
+  if (cost.unknownWriteTokens) return 'range';
+  return cost.pricedTokens ? 'estimated' : 'empty';
+}
+function formatUsd(n, compact=false) {
+  if (!Number.isFinite(n) || n < 0) return '—';
+  if (compact && n >= 1e6) return '$'+(n/1e6).toFixed(1)+'M';
+  if (compact && n >= 1e3) return '$'+(n/1e3).toFixed(1)+'k';
+  if (n > 0 && n < .0001) return '<$0.0001';
+  const decimals=n>0 && n<.01 ? 4 : 2;
+  return '$'+n.toLocaleString('en-US',{minimumFractionDigits:decimals,maximumFractionDigits:decimals});
+}
+function formatCost(cost, key='total') {
+  if (costStatus(cost)==='unavailable') return 'Sem preço';
+  const low=cost[key], high=key==='total'?cost.totalMax:key==='write'?cost.writeMax:low;
+  return Math.abs(high-low)>1e-10 ? formatUsd(low)+' – '+formatUsd(high) : formatUsd(low);
+}
+function pricingMetadata() {
+  return { version:PRICING_VERSION, asOf:PRICING_DATE, currency:'USD', basis:'current-standard-api-equivalent', source:PRICING_SOURCE };
+}
+const COST_CSV_HEADERS = ['api_cost_status','api_cost_currency','api_price_date','api_equivalent_usd_min','api_equivalent_usd_max',
+  'api_cache_read_usd','api_cache_write_usd_min','api_cache_write_usd_max','api_input_usd','api_output_usd',
+  'api_priced_tokens','api_unpriced_tokens','cache_write_unknown_ttl_tokens'];
+function costCsvCells(value) {
+  const c=costOf(value), status=costStatus(c);
+  const money=n=>status==='unavailable'?'':n.toFixed(9);
+  return [status,'USD',PRICING_DATE,...[c.total,c.totalMax,c.read,c.write,c.writeMax,c.input,c.output].map(money),
+    c.pricedTokens,c.unpricedTokens,c.unknownWriteTokens];
+}
+
+
+// lib/quota.js
+
+/** Calendar-week quota boundaries. Pure JS/Intl; no host timezone assumptions. */
+
+const DAY_MS = 86400000;
+function quotaSettings(options = {}) {
+  const timeZone = options.timeZone ?? 'Europe/Lisbon';
+  const resetDay = options.resetDay ?? 4;
+  const resetTime = options.resetTime ?? '20:00';
+  if (!Number.isInteger(resetDay) || resetDay < 0 || resetDay > 6) throw new Error('O dia de reset deve ser um dia da semana (0–6).');
+  if (typeof resetTime !== 'string' || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(resetTime)) throw new Error('Hora de reset inválida. Usa HH:mm, por exemplo 20:00.');
+  if (typeof timeZone !== 'string' || !timeZone.trim()) throw new Error('Fuso horário inválido. Exemplo: Europe/Lisbon.');
+  new Intl.DateTimeFormat('en', { timeZone }).format(0);
+  return { timeZone, resetDay, resetTime };
+}
+function quotaSignature(settings) {
+  const s = quotaSettings(settings);
+  return JSON.stringify([s.timeZone, s.resetDay, s.resetTime]);
+}
+/**
+ * Resolve local calendar time, including DST. If a clock time occurs twice,
+ * use the first occurrence; if it does not exist, move it forward by the gap.
+ * This is Temporal's "compatible" policy, implemented without a dependency.
+ * Never advance a local week by a fixed 168 hours.
+ */
+function createQuotaClock(options = {}) {
+  const settings = quotaSettings(options);
+  const formatter = new Intl.DateTimeFormat('en-CA', { timeZone: settings.timeZone,
+    calendar: 'gregory', numberingSystem: 'latn', hourCycle: 'h23',
+    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const resolutions = new Map(), periods = new Map();
+  const partsAt = timestamp => {
+    const p = {};
+    for (const part of formatter.formatToParts(new Date(timestamp))) if (part.type !== 'literal') p[part.type] = part.value;
+    return p;
+  };
+  const dateAt = timestamp => { const p = partsAt(timestamp); return `${p.year}-${p.month}-${p.day}`; };
+  const wallStamp = timestamp => {
+    const p = partsAt(timestamp);
+    return Date.parse(`${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}.000Z`);
+  };
+  function at(date, time = settings.resetTime) {
+    const key = date + 'T' + time;
+    if (resolutions.has(key)) return resolutions.get(key);
+    const target = Date.parse(key + ':00.000Z');
+    if (!Number.isFinite(target)) throw new Error('Data de reset inválida.');
+    // Probe both sides of transitions (including non-hour offsets/day skips).
+    const offsets = new Set();
+    for (const delta of [-2, -1, -.5, 0, .5, 1, 2]) {
+      const probe = target + delta * DAY_MS;
+      offsets.add(wallStamp(probe) - probe);
+    }
+    const candidates = [...offsets].map(offset => target - offset).sort((a,b) => a-b);
+    const exact = candidates.filter(candidate => wallStamp(candidate) === target);
+    let resolved = exact[0];
+    if (resolved === undefined) {
+      const later = candidates.map(timestamp => ({ timestamp, shift: wallStamp(timestamp) - target }))
+        .filter(x => x.shift > 0).sort((a,b) => a.shift - b.shift || a.timestamp - b.timestamp);
+      resolved = later[0]?.timestamp;
+    }
+    if (!Number.isFinite(resolved)) throw new Error('Não foi possível resolver a hora no fuso configurado.');
+    resolutions.set(key, resolved);
+    return resolved;
+  }
+  function periodFromDate(date) {
+    if (periods.has(date)) return periods.get(date);
+    const startMs = at(date), endMs = at(moveDay(date, 7));
+    const period = { date, id: new Date(startMs).toISOString(), startMs, endMs,
+      start: new Date(startMs).toISOString(), end: new Date(endMs).toISOString() };
+    periods.set(date, period);
+    return period;
+  }
+  function periodAt(timestamp, knownDate) {
+    if (!Number.isFinite(timestamp)) throw new Error('Timestamp de utilização inválido.');
+    const date = knownDate || dateAt(timestamp);
+    const weekday = new Date(date + 'T12:00:00Z').getUTCDay();
+    let startDate = moveDay(date, -((weekday - settings.resetDay + 7) % 7));
+    let period = periodFromDate(startDate);
+    if (timestamp < period.startMs) period = periodFromDate(moveDay(startDate, -7));
+    else if (timestamp >= period.endMs) period = periodFromDate(moveDay(startDate, 7));
+    return period;
+  }
+  return { settings, at, dateAt, periodAt, periodFromDate };
+}
+/** Display-only formatting. Never used to calculate a reset boundary or CSV key. */
+function quotaLocalLabel(timestamp, timeZone, includeYear = false, language = 'en-US') {
+  return createI18n(language).datetime(timestamp,timeZone,includeYear);
+}
+function quotaIntervalLabel(period, timeZone, includeYear = false, language = 'en-US') {
+  return `${quotaLocalLabel(period.startMs,timeZone,includeYear,language)} → ${quotaLocalLabel(period.endMs,timeZone,includeYear,language)}`;
+}
+
+/** Stable machine export label retained from v1.2.0; independent of UI language. */
+function quotaExportLabel(timestamp, timeZone, includeYear = true) {
+  const parts = new Intl.DateTimeFormat('en-GB', { timeZone, hourCycle:'h23',
+    calendar:'gregory', numberingSystem:'latn', day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }).formatToParts(new Date(timestamp));
+  const get = type => parts.find(p=>p.type===type)?.value;
+  return `${get('day')}/${get('month')}${includeYear ? '/' + get('year') : ''} ${get('hour')}:${get('minute')}`;
+}
+
+
+// lib/view-model.js
+
+
+
+const PAGE_DAYS = 45;
+const PAGE_WEEKS = 20;
+const RANGE_VALUES = ['all', '30d', '7d', 'quota'];
+function collectModels(day, model) {
+  const models = (day?.models || []).filter(x => model === 'all' || x.id === model);
+  const values = zero();
+  for (const m of models) addPriced(values, m);
+  return { date: day?.date, ...values, models };
+}
+function summarize(buckets) {
+  const totals = zero(), modelTotals = new Map();
+  let peak = null, active = 0;
+  for (const bucket of buckets) {
+    addPriced(totals, bucket);
+    if (bucket.requests > 0) active++;
+    if (!peak || total(bucket) > total(peak)) peak = bucket;
+    for (const m of bucket.models) {
+      if (!modelTotals.has(m.id)) modelTotals.set(m.id, { id: m.id, ...zero() });
+      addPriced(modelTotals.get(m.id), m);
+    }
+  }
+  const inputSide = totals.read + totals.write + totals.input;
+  return { totals, peak, active, modelTotals: [...modelTotals.values()].sort((a,b) => total(b)-total(a)),
+    cacheHit: inputSide ? totals.read / inputSide : null };
+}
+function makeView(snapshot, preferences = {}) {
+  const today = snapshot?.today || new Date().toISOString().slice(0, 10);
+  const range = RANGE_VALUES.includes(preferences.range) ? preferences.range : '30d';
+  const grouping = preferences.grouping === 'week' ? 'week' : 'day';
+  const timeZone = snapshot?.timeZone || preferences.timeZone || 'Europe/Lisbon';
+  const clock = createQuotaClock({ timeZone, resetDay: preferences.resetDay ?? snapshot?.quota?.resetDay,
+    resetTime: preferences.resetTime ?? snapshot?.quota?.resetTime });
+  const now = Number.isFinite(snapshot?.asOf) ? snapshot.asOf
+    : Number.isFinite(Date.parse(snapshot?.generatedAt)) ? Date.parse(snapshot.generatedAt) : clock.at(today, '23:59');
+  const currentQuota = clock.periodAt(now);
+  const quotaReady = snapshot?.quota?.signature === quotaSignature(clock.settings) && Array.isArray(snapshot?.weeks);
+  const allSource = Array.isArray(snapshot?.days) ? snapshot.days : [];
+  const first = allSource.find(d => d.date <= today)?.date || today;
+  const start = range === 'quota' ? currentQuota.date : range === 'all' ? first : moveDay(today, range === '7d' ? -6 : -29);
+  const model = typeof preferences.model === 'string' ? preferences.model : 'all';
+  const common = { range, grouping, start, end: today, currentQuota, quotaSettings: clock.settings, quotaReady,
+    dayCount: Math.max(1, daysBetween(start, today)),
+    allModels: [...new Set(allSource.flatMap(d => (d.models || []).map(m => m.id)))].sort(),
+    model, timeZone, generatedAt: snapshot?.generatedAt || null, asOf: now,
+    hasData: allSource.length > 0, busy: Boolean(snapshot?.busy) };
+  const currentDays = quotaReady ? (snapshot.weeks.find(w => w.id === currentQuota.id)?.days || []) : [];
+  if (grouping === 'week') return weeklyView(snapshot, preferences, common, clock);
+  const source = range === 'quota' ? currentDays : allSource;
+  const available = new Map(source.map(day => [day.date, day]));
+  const pageCount = Math.ceil(common.dayCount / PAGE_DAYS);
+  const page = clampPage(preferences.page, pageCount);
+  const pageEnd = moveDay(today, -page * PAGE_DAYS);
+  const pageStart = moveDay(pageEnd, -Math.min(PAGE_DAYS, common.dayCount-page*PAGE_DAYS)+1);
+  const buckets = source.filter(d => d.date >= start && d.date <= today).map(d => collectModels(d, model));
+  const summary = summarize(buckets);
+  const chartDays = [];
+  for (let date = pageStart; date <= pageEnd; date = moveDay(date, 1)) chartDays.push({ ...collectModels(available.get(date), model), date });
+  const day = chartDays.find(d => d.date === preferences.day) || chartDays.at(-1);
+  return { ...common, ...summary, activeDays: summary.active, buckets, page, pageCount, pageStart, pageEnd, chartDays, day };
+}
+function clampPage(page, pageCount) {
+  const value = Number.isFinite(page) ? Math.trunc(page) : 0;
+  return Math.max(0, Math.min(pageCount-1, value));
+}
+function weeklyView(snapshot, preferences, common, clock) {
+  const { range, currentQuota, start, end, model, asOf: now } = common;
+  const windowStart = range === 'quota' ? currentQuota.startMs : clock.at(start, '00:00');
+  const firstPeriod = range === 'quota' ? currentQuota
+    : range === 'all' ? (common.quotaReady && snapshot.weeks.length ? clock.periodFromDate(snapshot.weeks[0].date) : currentQuota)
+    : clock.periodAt(windowStart);
+  const weekMap = new Map((common.quotaReady ? snapshot.weeks : []).map(w => [w.id, w]));
+  const buckets = [], activeDays = new Set();
+  for (let date = firstPeriod.date; date <= currentQuota.date; date = moveDay(date, 7)) {
+    const period = clock.periodFromDate(date);
+    const source = weekMap.get(period.id);
+    const days = (source?.days || []).filter(d => (range === 'all' || range === 'quota' || d.date >= start) && d.date <= end)
+      .map(d => collectModels(d, model));
+    const summary = summarize(days);
+    for (const day of days) if (day.requests > 0) activeDays.add(day.date);
+    const isCurrent = period.id === currentQuota.id;
+    const clipped = range !== 'all' && range !== 'quota' && windowStart > period.startMs;
+    const bucket = { ...period, ...summary.totals, models: summary.modelTotals,
+      days, current: isCurrent, clipped,
+      observedStartMs: clipped ? windowStart : period.startMs,
+      observedEndMs: Math.min(now, period.endMs) };
+    buckets.push(bucket);
+  }
+  const summary = summarize(buckets);
+  const pageCount = Math.max(1, Math.ceil(buckets.length/PAGE_WEEKS));
+  const page = clampPage(preferences.page, pageCount);
+  const endIndex = buckets.length-page*PAGE_WEEKS;
+  const chartDays = buckets.slice(Math.max(0,endIndex-PAGE_WEEKS), endIndex);
+  const day = chartDays.find(w => w.id === preferences.week) || chartDays.at(-1);
+  return { ...common, ...summary, buckets, activeDays: activeDays.size,
+    weekCount: buckets.length, page, pageCount, chartDays, day,
+    pageStart: chartDays[0]?.date || start, pageEnd: chartDays.at(-1)?.date || end,
+    clippedWeeks: buckets.filter(w => w.clipped).length };
+}
+function chartValue(day, mode) {
+  if (mode === 'cost') return costOf(day).totalMax;
+  if (mode === 'cache') return day.read + day.write;
+  if (['read', 'write', 'input', 'output'].includes(mode)) return day[mode];
+  return total(day);
+}
+
+
+// lib/visuals.js
+
+
+
+
+
+const WIDTH = 480;
+const palettes = {
+  dark: { bg: '#10121a', card: '#181b26', elevated: '#202433', stroke: '#2a3042', text: '#f0f1fa', mute: '#9ca6be', subtle: '#737e98', read: '#a397ff', write: '#50d6bd', input: '#79b5ff', output: '#edbd7a', accent: '#b2a7ff' },
+  light: { bg: '#f4f5fa', card: '#ffffff', elevated: '#edf0f8', stroke: '#dce1ed', text: '#20263b', mute: '#5a657e', subtle: '#758099', read: '#6856cc', write: '#168472', input: '#326dba', output: '#a76b23', accent: '#6552c6' },
+};
+const palette = theme => palettes[theme] || palettes.dark;
+
+function text(xx, y, value, size, color, weight = 400, extra = '', maxWidth) {
+  // The mod has no DOM/font metrics. Conservative per-glyph sizing prevents
+  // translated labels and region-specific number formats crossing card edges.
+  // The complete value remains visible and in the accessible alternative.
+  const anchor = /text-anchor="end"/.test(extra)?'end':/text-anchor="middle"/.test(extra)?'middle':'start';
+  const available=maxWidth ?? (anchor==='end'?xx-12:anchor==='middle'?2*Math.min(xx-12,WIDTH-12-xx):WIDTH-12-xx);
+  const units=[...String(value)].reduce((sum,c)=>sum+(/\s/.test(c)?.33:/[ilI1.,:;!|']/u.test(c)?.32:/[MW@%]/u.test(c)?.94:/[A-Z0-9]/u.test(c)?.67:.58),0);
+  const spacing=Number(/letter-spacing="(-?[.\d]+)"/.exec(extra)?.[1]||0);
+  const estimate=units*size*1.07+Math.max(0,String(value).length-1)*spacing;
+  if(available>0&&estimate>available)size=Math.floor(size*available/estimate*10)/10;
+  return `<text x="${xx}" y="${y}" font-size="${size}" fill="${color}" font-weight="${weight}" ${extra}>${x(value)}</text>`;
+}
+function rect(xx, y, w, h, fill, r = 0, stroke = '') {
+  return `<rect x="${xx}" y="${y}" width="${Math.max(0,w)}" height="${Math.max(0,h)}" rx="${r}" fill="${fill}"${stroke ? ` stroke="${stroke}"` : ''}/>`;
+}
+function wrap(height, body, alt) {
+  return { source: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WIDTH} ${height}" width="${WIDTH}" height="${height}" role="img" aria-label="${x(alt)}"><g font-family="Segoe UI, Inter, Arial, sans-serif">${body}</g></svg>`, width: WIDTH, height, alt };
+}
+function headerSvg(theme = 'dark', loading = false, language = 'en-US') {
+  const l = createI18n(language), { t } = l;
+  const labels = Object.fromEntries(['read','write','input','output'].map(k=>[k,t(k)]));
+  const dateLabel = date => l.date(date,true);
+  const p = palette(theme);
+  let b = rect(0, 0, WIDTH, 78, p.bg);
+  b += rect(2, 8, 44, 44, p.elevated, 14, p.stroke);
+  [12,23,34].forEach((xx,i) => { b += rect(xx, 37-i*6, 5, 9+i*6, [p.read,p.write,p.input][i], 2); });
+  b += text(60, 28, 'Account Stats', 22, p.text, 650);
+  b += text(60, 49, t('headerTagline'), 12, p.mute);
+  b += rect(377, 13, 101, 26, p.elevated, 13);
+  b += `<circle cx="390" cy="26" r="3" fill="${loading ? p.output : p.write}"/>`;
+  b += text(400, 30, loading ? t('headerUpdating') : t('localPrivate'), 10, p.mute, 500, '', 68);
+  return wrap(78, b, t('headerAlt'));
+}
+function overviewSvg(view, theme = 'dark', language = 'en-US') {
+  const l = createI18n(language), { t } = l;
+  const labels = Object.fromEntries(['read','write','input','output'].map(k=>[k,t(k)]));
+  const dateLabel = date => l.date(date,true);
+  const p = palette(theme), values = view.totals;
+  const range = t(view.range==='quota'?'rangeQuota':view.range==='all'?'rangeAll':view.range==='7d'?'range7':'range30');
+  let b = `<defs><linearGradient id="summary" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${p.elevated}"/><stop offset="1" stop-color="${p.card}"/></linearGradient></defs>`;
+  b += rect(1, 1, 478, 129, 'url(#summary)', 18, p.stroke);
+  b += text(20, 25, range, 10, p.mute, 600, 'letter-spacing="1.4"');
+  b += text(20, 70, l.compact(total(values)), 40, p.text, 650, 'letter-spacing="-1.4"', 258);
+  b += text(21, 92, t('tokens',{n:l.integer(total(values))}), 12, p.mute, 400, '', 258);
+  b += text(20, 115, view.range==='quota' ? quotaIntervalLabel(view.currentQuota,view.timeZone,false,l) : `${l.date(view.start)}  →  ${l.date(view.end)}`, 10, p.subtle);
+  b += rect(293, 20, 1, 86, p.stroke);
+  b += text(312, 39, t('cacheReuse'), 9, p.mute, 600, 'letter-spacing=".7"', 148);
+  b += text(312, 71, view.cacheHit === null ? '—' : l.percent(view.cacheHit), 27, p.write, 600);
+  l.t('activeRequests',{days:l.integer(view.activeDays),requests:l.compact(values.requests)}).split(' · ').forEach((line,i)=>{b += text(312, 92+i*13, line, 10, p.mute,400,'',148);});
+  const keys = ['read','write','input','output'];
+  keys.forEach((key, i) => {
+    const xx = i % 2 === 0 ? 1 : 246, yy = i < 2 ? 144 : 231;
+    b += rect(xx, yy, 233, 75, p.card, 14, p.stroke);
+    b += rect(xx+14, yy+15, 4, 12, p[key], 2);
+    b += text(xx+26, yy+25, labels[key], 11, p.mute, 500);
+    b += text(xx+14, yy+51, l.compact(values[key]), 22, p[key], 600);
+    b += text(xx+14, yy+67, t('tokens',{n:l.integer(values[key])}), 9, p.subtle);
+  });
+  return wrap(315, b, t('overviewAlt',{start:l.date(view.start),end:l.date(view.end),total:l.integer(total(values)),read:l.integer(values.read),write:l.integer(values.write),input:l.integer(values.input),output:l.integer(values.output)}));
+}
+function chartSvg(view, mode = 'total', theme = 'dark', language = 'en-US') {
+  const l = createI18n(language), { t } = l;
+  const labels = Object.fromEntries(['read','write','input','output'].map(k=>[k,t(k)]));
+  const dateLabel = date => l.date(date,true);
+  const p = palette(theme), days = view.chartDays, weekly = view.grouping==='week', money = mode==='cost';
+  const keys = mode === 'cache' ? ['read','write'] : ['read','write','input','output'].includes(mode) ? [mode] : ['read','write','input','output'];
+  const max = Math.max(money ? .0001 : 1, ...days.map(d => chartValue(d, mode)));
+  const ceiling = !money && max <= 10 ? 10 : Math.ceil(max / (10 ** Math.floor(Math.log10(max)) / 2)) * (10 ** Math.floor(Math.log10(max)) / 2);
+  const left = money?84:66, top = 67, plotW = 463-left, plotH = 137, base = top+plotH, gap = plotW/days.length;
+  const barW = Math.min(days.length <= 7 ? 30 : 12, gap * 0.66);
+  let b = rect(1, 1, 478, money?292:268, p.card, 18, p.stroke);
+  b += text(20, 27, t(money?(weekly?'chartCostWeek':'chartCostDay'):weekly?'chartWeeks':'chartDays'), 14, p.text, 600,'',335);
+  b += text(20, 44, money?t('chartPricing',{date:l.date(PRICING_DATE)}):weekly ? t('chartStarts',{zone:view.timeZone}) : `${dateLabel(view.pageStart)} — ${dateLabel(view.pageEnd)} · ${view.timeZone}`, 10, p.mute);
+  b += text(460, 27, t(weekly?(days.length===1?'quotaOne':'quotaCount'):(days.length===1?'dayOne':'dayCount'),{n:l.integer(days.length)}), 9, p.subtle, 600, 'text-anchor="end" letter-spacing="1"');
+  [0, .5, 1].forEach(f => {
+    const yy = base-plotH*f;
+    b += `<line x1="${left}" x2="463" y1="${yy}" y2="${yy}" stroke="${p.stroke}" stroke-dasharray="${f ? '3 5' : '0'}"/>`;
+    b += text(left-8, yy+3, money?l.usd(ceiling*f,true):l.compact(Math.round(ceiling*f)), 9, p.subtle, 400, 'text-anchor="end"');
+  });
+  days.forEach((d,i) => {
+    const cx = left + gap*(i+.5), selected = d.date === view.day?.date;
+    if (selected) b += rect(cx - Math.max(barW+8, gap*.84)/2, top-5, Math.max(barW+8,gap*.84), plotH+11, p.elevated, 5);
+    let running = 0;
+    for (const key of keys) {
+      const v = money?costOf(d)[key]:d[key], h = v/ceiling*plotH;
+      if (v) b += rect(cx-barW/2, base-running-h, barW, h, p[key], 0);
+      running += h;
+    }
+    if (money) {
+      const c=costOf(d), uncertain=(c.totalMax-c.total)/ceiling*plotH;
+      if (uncertain>0) b += `<g opacity=".35">${rect(cx-barW/2,base-running-uncertain,barW,uncertain,p.write,0)}</g>`;
+      if (c.unpricedTokens) b += text(cx,base-running-uncertain-7,'?',10,p.output,600,'text-anchor="middle"');
+      running+=uncertain;
+    }
+    if (!running) b += rect(cx-1.5, base-3, 3, 3, p.subtle, 1.5);
+    if (selected) b += `<circle cx="${cx}" cy="${base+10}" r="2" fill="${p.accent}"/>`;
+    const labelStep = Math.max(Math.ceil(days.length/6), Math.ceil(36/gap));
+    if (days.length <= 7 || i===0 || i===days.length-1 || (i%labelStep===0 && days.length-1-i>=labelStep)) b += text(cx, base+25, dateLabel(d.date)+(weekly&&d.clipped?'*':''), 9, selected?p.text:p.subtle, selected?600:400, 'text-anchor="middle"');
+  });
+  let lx = 20;
+  keys.forEach(key => { b += rect(lx, 246, 6, 6, p[key], 2); b += text(lx+12, 252, labels[key], 10, p.mute,400,'',98); lx += 113; });
+  if (money) {
+    b+=text(20,278,t('chartUncertainty'),9,p.subtle);
+    return wrap(300,b,t('chartCostAlt',{grouping:t(weekly?'groupingWeek':'groupingDay'),values:days.map(d=>l.date(d.date)+': '+l.price(costOf(d))+(costOf(d).unpricedTokens?' ('+t('incompletePrice')+')':'')).join('; ')}));
+  }
+  return wrap(276,b,t('chartTokenAlt',{grouping:t(weekly?'groupingWeek':'groupingDay'),start:l.date(view.pageStart),end:l.date(view.pageEnd),
+    values:days.map(d=>l.date(d.date)+(weekly&&d.current?' ('+t('ongoing')+')':'')+(weekly&&d.clipped?' ('+t('partialFilter')+')':'')+': '+l.integer(chartValue(d,mode))).join('; '),selector:t(weekly?'week':'day')}));
+}
+function modelsSvg(models, title, subtitle, theme = 'dark', start = 0, limit = 5, language = 'en-US') {
+  const l = createI18n(language), { t } = l;
+  const labels = Object.fromEntries(['read','write','input','output'].map(k=>[k,t(k)]));
+  const dateLabel = date => l.date(date,true);
+  const p = palette(theme), rows = models.slice(start,start+limit), rowHeight = 148;
+  const h = 60 + Math.max(1, rows.length)*rowHeight;
+  let b = rect(1,1,478,h-3,p.card,18,p.stroke);
+  b += text(20,27,title,14,p.text,600);
+  b += text(20,44,subtitle,10,p.mute);
+  if (!rows.length) b += text(240,103,t('noUsage'),12,p.mute,400,'text-anchor="middle"');
+  rows.forEach((m,i) => {
+    const y = 66+i*rowHeight, c=costOf(m), status=costStatus(c);
+    if (i) b += rect(20,y-8,440,1,p.stroke);
+    const name = modelName(m.id);
+    b += `<circle cx="25" cy="${y+8}" r="4" fill="${[p.read,p.write,p.input,p.output][(i+start)%4]}"/>`;
+    b += text(38,y+12,name.length>30?name.slice(0,28)+'…':name,12,p.text,600,'',260);
+    b += text(460,y+12,l.compact(total(m))+' '+t('total'),11,p.mute,500,'text-anchor="end"',142);
+    b += text(20,y+32,'API '+l.price(c)+(status==='partial'?' · '+t('partial'):''),11,status==='unavailable'?p.output:p.accent,550);
+    [['read',20,52],['write',248,52],['input',20,103],['output',248,103]].forEach(([key,xx,dy]) => {
+      b += text(xx,y+dy,labels[key],9,p.mute,500);
+      b += text(xx,y+dy+15,l.integer(m[key]),12,p[key],550,'',210);
+      b += text(xx,y+dy+29,l.price(c,key),10,p.mute,400,'',210);
+    });
+  });
+  return wrap(h,b,title+'. '+rows.map(m=>t('modelAlt',{model:m.id,read:l.integer(m.read),write:l.integer(m.write),input:l.integer(m.input),output:l.integer(m.output),cost:l.price(costOf(m)),status:l.status(costStatus(costOf(m)))})).join('; '));
+}
+
+/** Kept separate from tokens: a quoted API equivalent is NOT quota consumption. */
+function costSvg(value, title, subtitle, theme='dark', language='en-US') {
+  const l = createI18n(language), { t } = l;
+  const labels = Object.fromEntries(['read','write','input','output'].map(k=>[k,t(k)]));
+  const dateLabel = date => l.date(date,true);
+  const p=palette(theme), c=costOf(value), status=costStatus(c), h=286;
+  let b=rect(1,1,478,h-5,p.card,18,p.stroke);
+  b+=rect(20,19,3,18,p.accent,1.5);
+  b+=text(32,32,title,12,p.text,600,'',390);
+  b+=text(460,31,'USD',10,p.mute,600,'text-anchor="end" letter-spacing="1"');
+  b+=text(20,54,subtitle.length>76?subtitle.slice(0,74)+'…':subtitle,9,p.mute);
+  const amount=l.price(c);
+  b+=text(20,94,amount,Math.min(amount.length>24?24:amount.length>16?28:36,Math.floor(440/(amount.length*.61)*10)/10),p.accent,650,'letter-spacing="-.7"');
+  const badge=l.status(status);
+  b+=text(20,115,badge,10,status==='partial'||status==='unavailable'?p.output:p.mute);
+  b+=rect(20,130,440,1,p.stroke);
+  [['read',20,152],['write',248,152],['input',20,199],['output',248,199]].forEach(([key,xx,yy])=>{
+    b+=rect(xx,yy-8,4,9,p[key],2);
+    b+=text(xx+12,yy,labels[key],10,p.mute,500,'',126);
+    const label=l.price(c,key);
+    b+=text(xx,yy+21,label,Math.min(label.length>23?11:14,Math.floor(212/(label.length*.61)*10)/10),p[key],600);
+  });
+  b+=rect(20,239,440,1,p.stroke);
+  let note=t('costNote',{date:l.date(PRICING_DATE)});
+  if(c.unpricedTokens) note=t('costUnpriced',{tokens:l.compact(c.unpricedTokens)});
+  else if(c.unknownWriteTokens) note=t('costUnknownTtl');
+  b+=text(20,261,note,9,p.subtle);
+  return wrap(h,b,t('costAlt',{title,subtitle,amount,read:l.price(c,'read'),write:l.price(c,'write'),input:l.price(c,'input'),output:l.price(c,'output'),badge,tokens:l.integer(c.unpricedTokens),date:l.date(PRICING_DATE)}));
+}
+
+/** Selected quota totals, kept distinct from totals of the entire range.
+ * The total already includes all four categories. Keep them all visible here,
+ * independently of the metric selected for the chart, including explicit zeros.
+ */
+function cycleSvg(week, view, theme='dark', language='en-US') {
+  const l = createI18n(language), { t } = l;
+  const labels = Object.fromEntries(['read','write','input','output'].map(k=>[k,t(k)]));
+  const dateLabel = date => l.date(date,true);
+  const p=palette(theme), h=week.clipped?271:253;
+  let b=rect(1,1,478,h-5,p.card,18,p.stroke);
+  b+=text(20,25,t(week.current?'currentQuota':'selectedQuota'),10,p.mute,600,'letter-spacing="1"');
+  b+=rect(379,12,81,23,p.elevated,11);
+  b+=text(419,27,t(week.current?'ongoing':'closed'),10,week.current?p.write:p.mute,600,'text-anchor="middle"');
+  const interval=quotaIntervalLabel(week,view.timeZone,false,l);
+  b+=text(20,55,interval,21,p.text,600,'letter-spacing="-.6"');
+  b+=text(20,74,week.date.slice(0,4)+' · '+view.timeZone+' · '+t('boundaries'),10,p.mute);
+  b+=rect(20,86,440,1,p.stroke);
+
+  // A prominent total on the left; a compact 2×2 category grid on the right.
+  // Reuse the same colors, labels and exact counters as the period/model cards.
+  b+=text(20,121,t(week.clipped?'totalFilter':'total'),10,p.mute,500,'',132);
+  b+=text(20,155,l.compact(total(week)),30,p.text,600,'letter-spacing="-.6"',132);
+  b+=text(20,175,t('tokens',{n:l.integer(total(week))}),9,p.subtle,400,'',132);
+  b+=text(20,205,t('fourCategories'),9,p.mute,400,'',132);
+  b+=rect(162,103,1,128,p.stroke);
+  b+=rect(182,167,278,1,p.stroke);
+  [['read',182,106],['write',334,106],['input',182,184],['output',334,184]].forEach(([key,xx,yy])=>{
+    b+=text(xx,yy,labels[key],10,p.mute,500,'',126);
+    b+=text(xx,yy+28,l.compact(week[key]),24,p[key],600,'',126);
+    b+=text(xx,yy+46,t('tokens',{n:l.integer(week[key])}),9,p.subtle,400,'',126);
+  });
+  if(week.clipped) b+=text(20,254,t('clippedNote'),10,p.output);
+  return wrap(h,b,t('cycleAlt',{interval,zone:view.timeZone,state:t(week.current?'ongoing':'closed'),partial:week.clipped?t('partialFilter')+'. ':'',total:l.integer(total(week)),read:l.integer(week.read),write:l.integer(week.write),input:l.integer(week.input),output:l.integer(week.output)}));
+}
+
+function quotaSvg(rateLimits, theme = 'dark', language = 'en-US', timeZone = 'UTC') {
+  const l = createI18n(language), { t } = l;
+  const labels = Object.fromEntries(['read','write','input','output'].map(k=>[k,t(k)]));
+  const dateLabel = date => l.date(date,true);
+  const p = palette(theme);
+  const rows = (rateLimits || []).filter(r => Number.isFinite(r.percentUsed));
+  let b = rect(1,1,478,58+Math.max(1,rows.length)*54,p.card,18,p.stroke);
+  b += text(20,27,t('limitsTitle'),14,p.text,600);
+  b += text(20,44,t('limitsHelp'),9,p.mute);
+  if (!rows.length) b += text(20,84,t('limitsUnavailable'),11,p.mute);
+  rows.forEach((r,i) => {
+    const y=69+i*54, percent=Math.min(100,Math.max(0,r.percentUsed));
+    const names={five_hour:t('fiveHour'),seven_day:t('sevenDay'),seven_day_sonnet:t('sonnet7'),seven_day_opus:t('opus7')};
+    b += text(20,y,names[r.kind]||String(r.kind||t('usage')).slice(0,45),11,p.mute,500);
+    b += text(460,y,l.percent(r.percentUsed/100),12,percent>=90?p.output:p.text,600,'text-anchor="end"');
+    b += rect(20,y+12,440,5,p.elevated,2.5);
+    b += rect(20,y+12,440*percent/100,5,percent>=90?p.output:p.accent,2.5);
+    if (r.resetsAt) {
+      const raw = r.resetsAt;
+      const d = new Date(typeof raw === 'number' && raw > 0 && raw < 1e12 ? raw*1000 : raw);
+      const label = Number.isFinite(+d) ? l.datetime(d,timeZone,true)+' '+timeZone : t('toConfirm');
+      b += text(20,y+32,t('renews',{date:label}),8,p.subtle);
+    }
+  });
+  return wrap(64+Math.max(1,rows.length)*54,b,rows.length?rows.map(r=>`${r.kind}: ${l.percent(r.percentUsed/100)}`).join('; '):t('limitsAlt'));
+}
+function statusSvg(title, message, theme='dark', isError=false) {
+  const p = palette(theme); let b=rect(1,1,478,101,p.card,16,p.stroke);
+  b+=rect(16,20,3,60,isError?p.output:p.accent,1.5);
+  b+=text(31,39,title,14,p.text,600);
+  // Explicit, bounded wrapping: SVG text is not HTML and cannot auto-wrap.
+  const words=String(message).split(/\s+/); const lines=[''];
+  for (const word of words) { if ((lines[lines.length-1]+' '+word).length>67) lines.push(word); else lines[lines.length-1]+=(lines[lines.length-1]?' ':'')+word; }
+  lines.slice(0,3).forEach((line,i)=>{b+=text(31,59+i*14,line,10,p.mute);});
+  return wrap(110,b,title+'. '+message);
+}
+
+
+// hooks/register.js
+
+/**
+ * Claude Code Desktop mod. Only official function hooks / $ APIs.
+ * Imported modules are pure ES modules; Node runs solely in the child scanner.
+ * No model, tool, prompt, authorization, telemetry or HTTP calls are made.
+ */
+
+
+
+
+
+const PANE = 'account-stats';
+const KEYS = ['range','model','mode','theme','nodePath','timeZone','extraRoots','includeSubagents','grouping','resetDay','resetTime'];
+
+let configuration = {};
+let prefs = { range: '30d', model: 'all', mode: 'total', theme: 'dark', page: 0, day: '', week: '', grouping: 'day',
+      resetDay: configuration.reset_day ?? 4, resetTime: configuration.reset_time ?? '20:00',
+  nodePath: configuration.node_path || 'node', timeZone: configuration.time_zone || 'Europe/Lisbon',
+  extraRoots: configuration.extra_roots || '', includeSubagents: configuration.include_subagents !== false };
+let snapshot = null, limits = [], limitsError = '', error = '', notice = '', loading = false;
+let visible = false, settings = false, diagnostics = false, periodModels = false, modelPage = 0;
+let resolvedNode = '', interval = null, pending = null, lastSuccess = 0, revision = 0, saveQueue = Promise.resolve();
+let extraTranscriptRoots = [];
+// A language is session-local presentation state, NEVER a saved preference.
+let uiLanguage = createI18n('en-US'), languageResolution = resolveLanguage(undefined), languageReadFailed = false;
+let languagePending = null;
+const message = (key, args = {}) => ({ key, args });
+const localized = value => value && typeof value === 'object' && value.key ? uiLanguage.t(value.key,value.args) : String(value || '');
+class ModError extends Error {
+  constructor(key, detail = '') { super(key); this.key=key; this.detail=String(detail).slice(0,500); }
+}
+let errorDetail = '';
+async function readLanguage($) {
+  if(languagePending) return languagePending;
+  languagePending = (async () => {
+    try {
+      // Official merged settings respect project, user and managed precedence.
+      // Keep only the language field. Never log/store/export the settings object.
+      const settings = await $.settings.read();
+      const resolved = resolveLanguage(settings?.language);
+      const changed = resolved.locale !== uiLanguage.locale || resolved.reason !== languageResolution.reason ||
+        resolved.language !== languageResolution.language || languageReadFailed;
+      languageResolution = resolved; uiLanguage = createI18n(resolved.locale); languageReadFailed = false;
+      if(changed) { $.ui.invalidate('command.describe'); redraw($); }
+    } catch {
+      // A missing/temporarily denied API must not reset a successfully read locale.
+      const changed = !languageReadFailed; languageReadFailed = true;
+      if(changed) redraw($);
+    }
+  })();
+  try { await languagePending; } finally { languagePending=null; }
+}
+
+function redraw($) { $.ui.invalidate('ui.render'); }
+async function save($) {
+  const value = {};
+  for (const key of KEYS) value[key] = prefs[key];
+  // Serialize writes from rapid presses. A failed preference save never blocks UI.
+  saveQueue = saveQueue.catch(() => {}).then(() => $.store.set('preferences-v1', value));
+  try { await saveQueue; } catch { notice = message('errorSave'); redraw($); }
+}
+function change($, patch) {
+  prefs = { ...prefs, ...patch }; modelPage = 0;
+  redraw($); return save($);
+}
+const zoneToday = () => {
+  try { return dayKey(Date.now(), prefs.timeZone); } catch { return new Date().toISOString().slice(0,10); }
+};
+const viewNow = () => makeView(snapshot || { days: [], today: zoneToday(), timeZone: prefs.timeZone }, prefs);
+async function readLimits($) {
+  try {
+    const usage = await $.session.usage();
+    limits = Array.isArray(usage?.rateLimits) ? usage.rateLimits.filter(r => r && typeof r.kind === 'string' && Number.isFinite(r.percentUsed)).slice(0,12) : [];
+    limitsError = '';
+  } catch { limits = []; limitsError = message('errorLimits'); }
+}
+async function nodeExecutable($) {
+  if (resolvedNode) return resolvedNode;
+  const requested = String(prefs.nodePath || 'node').trim();
+  const candidates = [requested];
+  if (requested === 'node') {
+    const programFiles = await $.env.get('ProgramFiles');
+    if (programFiles) candidates.push(programFiles.replace(/[\\/]$/, '') + '\\nodejs\\node.exe');
+    candidates.push('/opt/homebrew/bin/node', '/usr/local/bin/node', '/usr/bin/node');
+  }
+  for (const candidate of [...new Set(candidates)]) {
+    try {
+      const result = await $.process.run([candidate, '--version'], { timeoutMs: 5000 });
+      const match = /^v(\d+)\./.exec(String(result.stdout || '').trim());
+      if (result.exitCode === 0 && match && Number(match[1]) >= 20) { resolvedNode = candidate; return candidate; }
+    } catch { /* No shell and no downloaded executables; try next known location. */ }
+  }
+  throw new ModError('errorNode');
+}
+function schedule($, ms = 600) {
+  if (pending || !visible) return;
+  pending = $.clock.after(ms, async () => { pending = null; if (visible) await refresh($); });
+}
+async function refresh($, action = 'scan') {
+  await readLanguage($);
+  if (loading) { if (action === 'export') { notice = message('exportBusy'); redraw($); } return; }
+  const currentRevision = revision;
+  loading = true; error = ''; errorDetail = ''; if (action === 'export') notice = '';
+  redraw($);
+  try {
+    const executable = await nodeExecutable($);
+    const view = viewNow();
+    const config = { timeZone: prefs.timeZone, resetDay: prefs.resetDay, resetTime: prefs.resetTime, includeSubagents: prefs.includeSubagents,
+      extraRoots: [...String(prefs.extraRoots || '').split(/[\n;]/).map(s => s.trim()).filter(Boolean), ...extraTranscriptRoots],
+      action, budgetMs: 18000,
+      selection: { start: view.start, end: view.end, model: view.model, range: view.range, grouping: view.grouping } };
+    const script = $.plugin.root.replace(/[\\/]$/, '') + '/scanner/index.mjs';
+    const result = await $.process.run([executable, script], { stdin: JSON.stringify(config), timeoutMs: 120000 });
+    let parsed;
+    try { parsed = JSON.parse(String(result.stdout || '')); }
+    catch { throw new ModError('errorJson'); }
+    if (result.exitCode !== 0 || parsed.error) throw new ModError('errorIndexer', parsed.error || parsed.code || '');
+    if (!Array.isArray(parsed.days) || typeof parsed.today !== 'string') throw new ModError('errorResponse');
+    if (currentRevision !== revision) return; // A setting changed while scanning.
+    snapshot = parsed;
+    if (parsed.exportPath) notice = message('exportSaved',{path:parsed.exportPath});
+    else if (action === 'export') notice = message('exportRetry');
+    lastSuccess = await $.clock.now();
+    await readLimits($);
+  } catch (err) {
+    if (currentRevision === revision) { error = message(err instanceof ModError ? err.key : 'errorIndexer'); errorDetail = err instanceof ModError ? err.detail : String(err instanceof Error ? err.message : err).slice(0,500); };
+  } finally {
+    loading = false; redraw($);
+    if (visible && (currentRevision !== revision || snapshot?.diagnostics?.pendingFiles > 0 || snapshot?.busy)) schedule($, 3000);
+  }
+}
+async function applyConfig($, patch) {
+  revision++; resolvedNode = ''; snapshot = null; error = ''; notice = '';
+  await change($, { ...patch, page: 0, day: '', week: '' }); schedule($, 20);
+}
+async function open($, focus = true) {
+  await readLanguage($);
+  visible = true;
+  const base = { id: PANE, title: 'Account Stats', columns: 66, rows: 42, closeOnEscape: true };
+  await $.ui.open(focus ? { ...base, focus: true } : base);
+  schedule($, 20);
+}
+
+function register(on, options = {}) {
+    configuration = options;
+    prefs = { range: '30d', model: 'all', mode: 'total', theme: 'dark', page: 0, day: '', week: '', grouping: 'day',
+      resetDay: configuration.reset_day ?? 4, resetTime: configuration.reset_time ?? '20:00',
+      nodePath: configuration.node_path || 'node', timeZone: configuration.time_zone || 'Europe/Lisbon',
+      extraRoots: configuration.extra_roots || '', includeSubagents: configuration.include_subagents !== false };
+    snapshot = null; limits = []; limitsError = ''; error = ''; notice = ''; loading = false;
+    visible = false; settings = false; diagnostics = false; periodModels = false; modelPage = 0;
+    resolvedNode = ''; interval = null; pending = null; lastSuccess = 0; revision = 0;
+    extraTranscriptRoots = []; saveQueue = Promise.resolve();
+    uiLanguage=createI18n('en-US'); languageResolution=resolveLanguage(undefined); languageReadFailed=false; languagePending=null; errorDetail='';
+  on('session.start', async ($, e, next) => {
+    await readLanguage($);
+    await $.command.register({ name: 'account-stats', description: uiLanguage.t('command'), immediate: true });
+    try {
+      const saved = await $.store.get('preferences-v1');
+      if (saved && typeof saved === 'object') {
+        for (const key of KEYS) if (typeof saved[key] === typeof prefs[key]) prefs[key] = saved[key];
+      }
+    } catch { /* Default preferences remain usable. */ }
+    if (!['dark','light'].includes(prefs.theme)) prefs.theme = 'dark';
+    if (!['day','week'].includes(prefs.grouping)) prefs.grouping = 'day';
+    try { quotaSettings(prefs); }
+    catch { prefs.resetDay = 4; prefs.resetTime = '20:00'; prefs.timeZone = 'Europe/Lisbon'; notice = message('errorResetConfig'); }
+    interval?.cancel();
+    interval = $.clock.every(30000, async () => { if (visible) await refresh($); });
+    if (configuration.auto_open === true) { visible = true; $.clock.after(50, () => open($, false)); }
+    return next(e);
+  });
+  on('command.run', { command: 'account-stats' }, async ($, e) => {
+    const arg = String(e.args || '').trim();
+    if (arg === 'close') { visible = false; pending?.cancel(); pending = null; await $.ui.close({ id: PANE }); return {}; }
+    if (['all','7d','30d'].includes(arg)) await change($, { range: arg, page: 0, day: '', week: '' });
+    else if (arg === 'quota') await change($, { range: 'quota', grouping: 'week', page: 0, week: '', day: '' });
+    else if (arg === 'weeks') await change($, { range: 'all', grouping: 'week', page: 0, week: '', day: '' });
+    else if (arg === 'settings') settings = true;
+    else if (arg && arg !== 'refresh') notice = message('commandOptions');
+    await open($); return {};
+  });
+  on('command.describe', { command: 'account-stats' }, async ($, e, next) => {
+    const result = await next(e);
+    return { ...result, description: uiLanguage.t('command') };
+  });
+  on('config.set', { key: 'language' }, async ($, e, next) => {
+    const result = await next(e); // Never rewrite, block or presume a proposed value was accepted.
+    await readLanguage($);
+    $.clock.after(50, () => readLanguage($));
+    return result;
+  });
+  on('classic.ConfigChange', async ($, e, next) => {
+    const result = await next(e);
+    await readLanguage($);
+    $.clock.after(50, () => readLanguage($));
+    return result;
+  });
+  // Let turns finish unchanged. File scanning runs on its own timer afterwards.
+  on('turn.complete', async ($, e, next) => { schedule($, 1000); return next(e); });
+  on('session.measure', async ($, e, next) => { schedule($, 1000); return next(e); });
+  on('ui.close', async ($, e, next) => {
+    if (e.id === PANE) { visible = false; pending?.cancel(); pending = null; }
+    return next(e);
+  });
+  // Observe only the transcript path, never the prompt or message content.
+  on('classic.SessionStart', async ($, e, next) => {
+    if (typeof e.transcript_path === 'string' && e.transcript_path.endsWith('.jsonl')) {
+      const parent = e.transcript_path.replace(/[\\/][^\\/]+$/, '');
+      if (parent && !extraTranscriptRoots.includes(parent)) extraTranscriptRoots.push(parent);
+      extraTranscriptRoots = extraTranscriptRoots.slice(-20);
+    }
+    return next(e);
+  });
+  on('session.end', async ($, e, next) => {
+    if (e.reason === 'logout') { limits = []; snapshot = null; notice = message('loggedOut'); redraw($); }
+    // /clear and /resume do not fire session.start again; keep timer registered.
+    return next(e);
+  });
+
+  on('ui.render', { component: 'Pane' }, async ($, e, next) => {
+    if (e.requestId !== PANE) return next(e);
+    const { Box, Text, Button, Select, Input, Svg } = $.ui.resolve(e);
+    const l = uiLanguage, {t}=l;
+    const p = palette(prefs.theme), view = viewNow();
+    const intervalLabel=(period,year=false)=>quotaIntervalLabel(period,view.timeZone,year,l);
+    const graphic = e.surface === 'desktop' || e.surface === 'vscode';
+    // bodyColumns is measured in cells; Svg dimensions are pixels.
+    const columns = Number(e.props?.bodyColumns) || 64;
+    const svgWidth = Math.max(120, Math.min(640, Math.floor((columns-2)*7.5)));
+    const svg = drawing => graphic
+      ? Svg({ source: drawing.source, alt: drawing.alt, width: svgWidth, height: Math.round(drawing.height*svgWidth/drawing.width) })
+      : Text({ color: p.text, wrap: 'wrap', children: [drawing.alt] });
+    const line = (value, dim = true) => Text({ color: dim?p.mute:p.text, wrap: 'wrap', children: [String(value)] });
+    const button = (key,label,fn,dim=false) => Button({ key,label,plain:true,dimColor:dim,onPress:fn });
+    const row = children => Box({ flexDirection:'row',flexWrap:'wrap',columnGap:1,children });
+    const cards = [svg(headerSvg(prefs.theme,loading,l)), row([
+      ...[['all',t('all')],['30d',t('days30')],['7d',t('days7')],['quota',t('thisQuota')]].map(([value,label]) => Box({
+        key:'range-box-'+value, backgroundColor:prefs.range===value?p.elevated:p.bg, paddingX:1,
+        children:[button('range-'+value,(prefs.range===value?'● ':'')+label,()=>change($,{range:value,page:0,day:'',week:'',...(value==='quota'?{grouping:'week'}:{})}),prefs.range!==value)]
+      })),
+      button('refresh',loading?t('refreshing'):'↻ '+t('refresh'),()=>refresh($),loading),
+    ])];
+    cards.push(row([
+      button('group-day',(view.grouping==='day'?'● ':'')+t('byDay'),()=>change($,{grouping:'day',page:0,day:'',week:''}),view.grouping!=='day'),
+      button('group-week',(view.grouping==='week'?'● ':'')+t('byWeek'),()=>change($,{grouping:'week',page:0,day:'',week:''}),view.grouping!=='week'),
+    ]));
+    const needsQuota = view.grouping==='week' || view.range==='quota';
+    const weekly = view.grouping==='week';
+    if (error) cards.push(svg(statusSvg(t('updateFailed'),localized(error),prefs.theme,true)), line(localized(error)));
+    if (snapshot?.partial || snapshot?.busy) cards.push(line(snapshot?.busy?t('indexBusy'):t('importPartial',{n:l.integer(snapshot.diagnostics?.pendingFiles||0)})));
+    if (!snapshot && !error) cards.push(svg(statusSvg(t('loadingTitle'),t('loadingHelp'),prefs.theme)));
+    if (snapshot && (snapshot.initialScan || (needsQuota && !view.quotaReady))) cards.push(svg(statusSvg(t('preparingTitle'),t('preparingHelp'),prefs.theme)));
+    if (snapshot && !snapshot.initialScan && (!needsQuota || view.quotaReady)) {
+      if (!view.hasData) cards.push(svg(statusSvg(t('emptyTitle'),t('emptyHelp'),prefs.theme)));
+      cards.push(Select({key:'model',label:t('model'),value:view.model,
+        options:[{value:'all',label:t('allModels')},...view.allModels.map(id=>({value:id,label:id}))],
+        onSelect:value=>change($,{model:value,day:'',page:0})}));
+      cards.push(svg(overviewSvg(view,prefs.theme,l)));
+      cards.push(svg(costSvg(view.totals,t('costPeriod'),t('periodSubtitle',{start:l.date(view.start),end:l.date(view.end)}),prefs.theme,l)));
+      if (needsQuota) cards.push(line(t('reset',{day:l.weekday(prefs.resetDay),time:prefs.resetTime,zone:view.timeZone})));
+      if (view.range==='quota') cards.push(line(t('currentInterval',{interval:intervalLabel(view.currentQuota,true)})));
+      if (weekly && view.clippedWeeks) cards.push(line(t('clippedHelp')));
+      cards.push(Select({key:'metric',label:t('chart'),value:prefs.mode,
+        options:[{value:'total',label:t('metricTotal')},{value:'cost',label:t('metricCost')},{value:'cache',label:t('metricCache')},
+          {value:'read',label:t('metricRead')},{value:'write',label:t('metricWrite')},{value:'input',label:t('metricInput')},{value:'output',label:t('metricOutput')}],
+        onSelect:value=>change($,{mode:value})}));
+      cards.push(svg(chartSvg(view,prefs.mode,prefs.theme,l)));
+      if (view.pageCount>1) cards.push(row([
+        ...(view.page<view.pageCount-1?[button('older',t(weekly?'olderWeeks':'olderDays'),()=>change($,{page:view.page+1,day:'',week:''}))]:[]),
+        line(t('page',{page:l.integer(view.page+1),pages:l.integer(view.pageCount),start:l.date(view.pageStart),end:l.date(view.pageEnd)})),
+        ...(view.page>0?[button('newer',t(weekly?'newerWeeks':'newerDays'),()=>change($,{page:view.page-1,day:'',week:''}))]:[]),
+      ]));
+      if (weekly) {
+        cards.push(Select({key:'week',label:t('week'),value:view.day.id,
+          options:[...view.chartDays].reverse().map(w=>({value:w.id,label:`${intervalLabel(w,true)} · ${t('tokens',{n:l.integer(total(w))})}${w.current?' · '+t('ongoing'):''}${w.clipped?' · '+t('partialFilter'):''}`})),
+          onSelect:value=>change($,{week:value})}));
+        cards.push(svg(cycleSvg(view.day,view,prefs.theme,l)));
+      } else {
+        cards.push(Select({key:'day',label:t('day'),value:view.day.date,
+          options:[...view.chartDays].reverse().map(d=>({value:d.date,label:`${l.date(d.date)} · ${t('tokens',{n:l.integer(total(d))})}`})),
+          onSelect:value=>change($,{day:value})}));
+      }
+      cards.push(svg(costSvg(view.day,t(weekly?'costWeek':'costDay'),
+        weekly?intervalLabel(view.day)+(view.day.clipped?' · '+t('partialFilter'):''):l.date(view.day.date),prefs.theme,l)));
+      cards.push(row([
+        button('daily-models',(periodModels?'':'● ')+t(weekly?'modelsWeek':'modelsDay'),()=>{periodModels=false;modelPage=0;redraw($);},periodModels),
+        button('period-models',(periodModels?'● ':'')+t('inPeriod'),()=>{periodModels=true;modelPage=0;redraw($);},!periodModels),
+      ]));
+      const models = periodModels ? view.modelTotals : view.day.models;
+      const modelPages = Math.max(1,Math.ceil(models.length/5)); modelPage=Math.min(modelPage,modelPages-1);
+      cards.push(svg(modelsSvg(models,periodModels?t('modelsPeriod'):weekly?t('modelsWeek'):t('modelsOnDate',{date:l.date(view.day.date)}),
+        periodModels?t('fullFilter',{start:l.date(view.start),end:l.date(view.end)}):t('details',{requests:l.integer(view.day.requests),tokens:l.integer(total(view.day))}),prefs.theme,modelPage*5,5,l)));
+      if (modelPages>1) cards.push(row([
+        ...(modelPage>0?[button('models-prev',t('previousModels'),()=>{modelPage--;redraw($);})]:[]),line(`${modelPage+1}/${modelPages}`),
+        ...(modelPage<modelPages-1?[button('models-next',t('moreModels'),()=>{modelPage++;redraw($);})]:[]),
+      ]));
+      cards.push(svg(quotaSvg(limits,prefs.theme,l,view.timeZone)));
+      if (limitsError) cards.push(line(localized(limitsError)));
+    }
+    cards.push(row([
+      button('export',t('export'),()=>refresh($,'export')),
+      button('theme',t(prefs.theme==='dark'?'light':'dark'),()=>change($,{theme:prefs.theme==='dark'?'light':'dark'})),
+      button('settings',t(settings?'closeSettings':'settings'),()=>{settings=!settings;redraw($);}),
+      button('diagnostics',t('diagnostics'),()=>{diagnostics=!diagnostics;redraw($);}),
+    ]));
+    if (notice) cards.push(line(localized(notice)));
+    if (settings) {
+      cards.push(line(t('settingsSaved'),false));
+      cards.push(line(t('languageHeading'),false));
+      cards.push(line(t('languageStatus',{locale:l.locale}),false));
+      cards.push(line(t('languageHelp')));
+      if(languageReadFailed) cards.push(line(t('languageUnavailable')));
+      else if(languageResolution.reason==='default') cards.push(line(t('languageDefault')));
+      else if(languageResolution.reason==='unsupported') cards.push(line(t('languageFallback',{language:languageResolution.language})));
+      cards.push(line(t('quotaHeading'),false));
+      cards.push(Select({key:'reset-day',label:t('resetDay'),value:String(prefs.resetDay),
+        options:Array.from({length:7},(_,value)=>({label:l.weekday(value),value:String(value)})),
+        onSelect:async value=>{
+          const resetDay=Number(value);
+          try { quotaSettings({...prefs,resetDay}); await applyConfig($,{resetDay}); }
+          catch { notice=message('errorResetDay');redraw($); }
+        }}));
+      cards.push(Input({key:'reset-time',label:t('resetTime'),value:prefs.resetTime,placeholder:'20:00',submitLabel:t('save'),
+        onSubmit:async value=>{
+          const resetTime=String(value).trim();
+          try { quotaSettings({...prefs,resetTime}); await applyConfig($,{resetTime}); }
+          catch { notice=message('errorResetTime');redraw($); }
+        }}));
+      cards.push(line(t('resetHelp')));
+      cards.push(Input({key:'node-path',label:'Node.js 20+',value:prefs.nodePath,placeholder:'C:\\Program Files\\nodejs\\node.exe',submitLabel:t('save'),
+        onSubmit:value=>applyConfig($,{nodePath:String(value).trim()||'node'})}));
+      cards.push(Input({key:'time-zone',label:t('timeZone'),value:prefs.timeZone,submitLabel:t('save'),
+        onSubmit:async value=>{
+          try { const timeZone=String(value).trim(); quotaSettings({...prefs,timeZone}); await applyConfig($,{timeZone}); }
+          catch { notice=message('errorTimeZone');redraw($); }
+        }}));
+      cards.push(Input({key:'extra-roots',label:t('extraRoots'),value:String(prefs.extraRoots).replace(/\n/g,';'),submitLabel:t('save'),
+        onSubmit:value=>applyConfig($,{extraRoots:value})}));
+      cards.push(button('subagents',(prefs.includeSubagents?'☑ ':'☐ ')+t('includeSubagents'),()=>applyConfig($,{includeSubagents:!prefs.includeSubagents})));
+      cards.push(line(t('rootsHelp')));
+    }
+    if (settings) {
+      cards.push(line(t('pricingHeading'),false));
+      cards.push(line(t('pricingHelp',{date:l.date(PRICING_DATE)})));
+      cards.push(line(t('ttlHelp')));
+      cards.push(line(t('exclusions')));
+    }
+    if (diagnostics) {
+      const d=snapshot?.diagnostics||{};
+      cards.push(line(t('diagnosticsHeading'),false));
+      cards.push(line(t('languageStatus',{locale:l.locale})));
+      if(errorDetail) cards.push(line(t('technicalError',{detail:errorDetail})));
+      cards.push(line(t('diagnosticsPricing',{date:l.date(PRICING_DATE),status:l.status(costStatus(costOf(view.totals))),tokens:l.integer(costOf(view.totals).unpricedTokens)})));
+      for (const m of view.modelTotals || []) if (costOf(m).unpricedTokens) cards.push(line(t('diagnosticsModel',{model:m.id,tokens:l.integer(costOf(m).unpricedTokens)}))); 
+      cards.push(line(t('diagnosticsNode',{node:resolvedNode||t('nodePending'),zone:prefs.timeZone})));
+      cards.push(line(t('diagnosticsReset',{day:l.weekday(prefs.resetDay),time:prefs.resetTime,count:l.integer(snapshot?.weeks?.length||0)})));
+      cards.push(line(t('diagnosticsFiles',{found:l.integer(d.discoveredFiles||0),indexed:l.integer(d.indexedFiles||0),archived:l.integer(d.archivedFiles||0)})));
+      cards.push(line(t('diagnosticsDuplicates',{duplicates:l.integer(d.duplicateCopies||0),malformed:l.integer(d.malformed||0),oversized:l.integer(d.oversized||0)})));
+      cards.push(line(t('diagnosticsRecords',{weak:l.integer(d.weakIdentity||0),future:l.integer(d.futureRecords||0),agents:l.integer(d.subagentRequests||0)})));
+      for (const root of snapshot?.roots||[]) cards.push(line(t('source',{path:root})));
+      if (snapshot?.cacheDir) cards.push(line(t('index',{path:snapshot.cacheDir})));
+      for (const warning of d.warnings||[]) cards.push(line(warning.code+': '+warning.path));
+    }
+    if (lastSuccess) cards.push(line(t('updated',{date:l.datetime(lastSuccess,prefs.timeZone,true)+' '+prefs.timeZone})));
+    cards.push(line(t('historyHelp')));
+    cards.push(line(t('categoriesHelp')));
+    // Spacing belongs to the host layout, not to SVG viewBox padding or demo CSS.
+    // Every section keeps a non-shrinking native row gap, including everything
+    // below the selected-quota panel (API card, models, limits and footer).
+    const sections=cards.map((child,index)=>Box({key:'section-'+index,flexDirection:'column',
+      width:'100%',flexShrink:0,marginTop:index===0?0:1,children:[child]}));
+    return Box({flexDirection:'column',width:'100%',paddingX:1,paddingBottom:1,backgroundColor:p.bg,children:sections});
+  });
+}
+
+
+// tests/fixtures.mjs
+
+
+
+function transcript(id='msg-a', patch={}) {
+  return { type:'assistant', uuid:'row-'+id, timestamp:'2026-10-16T12:00:00Z',
+    message:{id,role:'assistant',model:'claude-opus-example',content:[{type:'text',text:'PRIVATE_TEXT_DO_NOT_STORE'}],
+      usage:{cache_read_input_tokens:1000,cache_creation_input_tokens:100,input_tokens:20,output_tokens:30}}, ...patch };
+}
+function demoSnapshot(today='2026-10-16', count=110) {
+  // Deliberately fictitious fixture, never imported by the runtime plugin.
+  const days=[];
+  for(let i=0;i<count;i++) {
+    const date=moveDay(today,i-count+1); if(i%13===0) continue;
+    const models=['claude-opus-5-5','claude-sonnet-5-5','claude-haiku-5-5'].map((id,j)=>{
+      const factor = [1,0.45,0.17][j], wave=0.7+0.3*Math.sin(i*1.7+j)+i/count*.7;
+      return {id,read:Math.round(2200000*factor*wave),write:Math.round(410000*factor*wave),input:Math.round(39000*factor*wave),output:Math.round(82000*factor*wave),requests:Math.round(80*factor*wave)};
+    });
+    days.push({date,models});
+  }
+  return withDemoQuota({version:1,today,timeZone:'Europe/Lisbon',days,generatedAt:'2026-10-16T16:00:00.000Z',includeSubagents:true,
+    diagnostics:{discoveredFiles:64,indexedFiles:64,archivedFiles:0,duplicateCopies:27,pendingFiles:0,warnings:[]},
+    roots:['D:/DEMONSTRACAO/.claude/projects'],cacheDir:'D:/DEMONSTRACAO/.claude/account-stats/v1',partial:false,busy:false});
+}
+const demoLimits = [{kind:'five_hour',percentUsed:34,resetsAt:'2026-10-16T19:30:00.000Z'},{kind:'seven_day',percentUsed:62,resetsAt:'2026-10-22T19:00:00.000Z'}];
+
+/** Regroup synthetic fixture counters at two explicit timestamps per day. */
+function withDemoQuota(snapshot, options={}) {
+  const clock=createQuotaClock({timeZone:options.timeZone||'Europe/Lisbon',resetDay:options.resetDay,resetTime:options.resetTime});
+  const weeks=new Map(), byDate=new Map();
+  for(const day of snapshot.days) {
+    for(const [i,time] of ['08:00:00Z',day.date===snapshot.today?'14:00:00Z':'21:00:00Z'].entries()) {
+      const timestamp=Date.parse(day.date+'T'+time), date=clock.dateAt(timestamp);
+      const period=clock.periodAt(timestamp,date);
+      if(!weeks.has(period.id)) weeks.set(period.id,{...period,byDate:new Map()});
+      const wk=weeks.get(period.id);
+      if(!wk.byDate.has(date))wk.byDate.set(date,new Map());
+      if(!byDate.has(date))byDate.set(date,new Map());
+      for(const model of day.models) {
+        const values={};
+        for(const k of ['read','write','input','output','requests']) values[k]=i===0?Math.floor(model[k]*.65):model[k]-Math.floor(model[k]*.65);
+        // Synthetic per-request splits; never price a day as one Haiku prompt.
+        values.cost=zeroCost();
+        const requests=Math.max(1,values.requests);
+        for(let r=0;r<requests;r++) {
+          const rec={model:model.id,requests:1};
+          for(const k of ['read','write','input','output']) rec[k]=Math.floor(values[k]/requests)+(r<values[k]%requests?1:0);
+          // Most demonstration writes use 1h; a few missing TTLs illustrate ranges.
+          if(Number(day.date.slice(-2))%11!==0) {rec.write1h=Math.floor(rec.write*.8);rec.write5m=rec.write-rec.write1h;}
+          addCost(values.cost,priceRecord(rec));
+        }
+        for(const map of [wk.byDate.get(date),byDate.get(date)]) {
+          if(!map.has(model.id)) map.set(model.id,{id:model.id,...zero()});
+          addPriced(map.get(model.id),values);
+        }
+      }
+    }
+  }
+  const toDays=map=>[...map].sort(([a],[b])=>a.localeCompare(b)).map(([date,models])=>({date,models:[...models.values()].sort((a,b)=>total(b)-total(a))}));
+  const asOf=Date.parse(snapshot.generatedAt);
+  return {...snapshot,pricing:pricingMetadata(),timeZone:clock.settings.timeZone,asOf,today:clock.dateAt(asOf),days:toDays(byDate),
+    quota:{...clock.settings,signature:quotaSignature(clock.settings)},
+    weeks:[...weeks.values()].sort((a,b)=>a.startMs-b.startMs).map(({byDate,...period})=>({...period,days:toDays(byDate)}))};
+}
+
+
+// preview/app.js
+// Browser-only host simulation. Fictitious data. Never loaded by Claude Code.
+const sample = demoSnapshot();
+const registrations = [], timeouts = new Set();
+let redrawQueued = false, lastTree = null;
+let previewLanguage=new URLSearchParams(location.search).get('lang')??'english';
+const stage = document.getElementById('panel');
+const callsToDraw = () => { if(redrawQueued)return;redrawQueued=true;queueMicrotask(async()=>{redrawQueued=false;await drawPreview();}); };
+const host = {
+ plugin:{root:'/DEMO/account-stats',name:'account-stats'},
+ settings:{read:async()=>({language:previewLanguage})},
+ command:{register:async()=>{}},store:{get:async()=>null,set:async()=>{}},env:{get:async()=>undefined},
+ clock:{now:async()=>Date.parse(sample.generatedAt),every:()=>({cancel(){}}),after:(ms,fn)=>{const id=setTimeout(fn,Math.min(ms,40));timeouts.add(id);return {cancel(){clearTimeout(id);}};}},
+ ui:{resolve:()=>Object.fromEntries(['Box','Text','Button','Select','Input','Svg'].map(type=>[type,props=>({type,props})])),
+ invalidate:callsToDraw,open:async()=>({isPlaced:true}),close:async()=>{}},
+ session:{usage:async()=>({rateLimits:demoLimits})},
+ process:{run:async(argv,init)=>{
+  if(argv[1]==='--version')return{exitCode:0,stdout:'v22.16.0'};
+  const config=JSON.parse(init.stdin);
+  const configured=withDemoQuota(sample,config);
+  if(config.action==='export')return{exitCode:0,stdout:JSON.stringify({...configured,exportPath:uiLanguage.t('previewNoFile')})};
+  return{exitCode:0,stdout:JSON.stringify(configured)};
+ }}
+};
+function registerHook(name,matcher,fn){if(typeof matcher==='function'){fn=matcher;matcher={};}registrations.push({name,matcher,fn});return{catch(){return this;}};}
+async function dispatch(name,event={}){const hook=registrations.find(h=>h.name===name&&Object.entries(h.matcher).every(([k,v])=>event[k]===v));return hook?.fn(host,event,async()=>({}));}
+function renderElement(node) {
+ if(typeof node==='string'||typeof node==='number')return document.createTextNode(String(node));
+ const p=node.props;let el;
+ if(node.type==='Box'){
+  el=document.createElement('div');el.className='box';el.style.display='flex';el.style.flexDirection=p.flexDirection||'column';
+  if(p.flexWrap)el.style.flexWrap=p.flexWrap;if(p.backgroundColor)el.style.backgroundColor=p.backgroundColor;
+  if(p.paddingX)el.style.paddingInline=p.paddingX*7.5+'px';if(p.columnGap)el.style.columnGap=p.columnGap*8+'px';
+  if(p.width)el.style.width=p.width;
+  if(p.flexShrink!==undefined)el.style.flexShrink=p.flexShrink;
+  if(p.marginTop!==undefined)el.style.marginTop=p.marginTop*16+'px';
+  if(p.marginBottom!==undefined)el.style.marginBottom=p.marginBottom*16+'px';
+  if(p.paddingBottom)el.style.paddingBottom=p.paddingBottom*16+'px';
+  if(p.gap)el.style.gap=p.gap*16+'px';
+  if(p.rowGap)el.style.rowGap=p.rowGap*16+'px';
+  for(const child of p.children||[])el.append(renderElement(child));
+ }else if(node.type==='Svg'){
+  el=document.createElement('img');el.className='custom-svg';el.alt=p.alt;el.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(p.source);
+  el.style.width=p.width+'px';el.style.maxWidth='100%';el.style.height='auto';
+ }else if(node.type==='Text'){
+  el=document.createElement('div');el.className='host-text';el.textContent=(p.children||[]).join('');if(p.color)el.style.color=p.color;
+ }else if(node.type==='Button'){
+  el=document.createElement('button');el.textContent=p.label;el.type='button';el.dataset.key=p.key;
+  if(p.dimColor)el.classList.add('dim');el.onclick=async()=>{await p.onPress();};
+ }else if(node.type==='Select'){
+  el=document.createElement('label');el.className='picker';const span=document.createElement('span');span.textContent=p.label;el.append(span);
+  const input=document.createElement('select');input.dataset.key=p.key;input.setAttribute('aria-label',p.label);
+  for(const option of p.options){const opt=document.createElement('option');opt.value=option.value;opt.textContent=option.label;input.append(opt);}
+  input.value=p.value;input.onchange=()=>p.onSelect(input.value);el.append(input);
+ }else if(node.type==='Input'){
+  el=document.createElement('label');el.className='picker';const span=document.createElement('span');span.textContent=p.label;el.append(span);
+  const input=document.createElement('input');input.dataset.key=p.key;input.value=p.value;input.placeholder=p.placeholder||'';input.onkeydown=e=>{if(e.key==='Enter')p.onSubmit(input.value);};el.append(input);
+ }else throw new Error('Unknown element '+node.type);
+ if(p.key)el.dataset.key=p.key;return el;
+}
+async function drawPreview(){
+ const width=Math.min(540,stage.getBoundingClientRect().width);
+ const tree=await dispatch('ui.render',{component:'Pane',requestId:'account-stats',surface:'desktop',props:{bodyColumns:width/7.5}});
+ if(!tree)return;
+ const language=createI18n(uiLanguage.locale);document.documentElement.lang=language.locale;document.title=language.t('previewTitle');
+ for(const [id,key]of [['preview-banner','previewBanner'],['preview-help','previewHelp'],['preview-frame','previewFrame'],['preview-language-label','previewLanguage']])document.getElementById(id).textContent=language.t(key);
+ document.getElementById('preview-language').setAttribute('aria-label',language.t('previewLanguage'));
+ lastTree=tree;document.body.dataset.theme=tree.props.backgroundColor==='#f4f5fa'?'light':'dark';
+ const focus=document.activeElement?.dataset.key;
+ stage.replaceChildren(renderElement(tree));
+ if(focus)stage.querySelector(`[data-key="${focus}"]`)?.focus({preventScroll:true});
+ window.__accountStatsPreview={locale:uiLanguage.locale,language:languageResolution,preferences:{...prefs},totals:JSON.parse(JSON.stringify(viewNow().totals)),selection:JSON.parse(JSON.stringify(viewNow().day)),labels:Object.fromEntries(Object.keys(CATALOGUES.en).map(k=>[k,uiLanguage.t(k)])),range:stage.querySelector('[data-key="day"] select')?.options.length,svgCount:stage.querySelectorAll('img').length};
+}
+// This selector simulates the host setting; it is not a preference in the mod.
+const languagePicker=document.getElementById('preview-language');
+languagePicker.value=previewLanguage;
+languagePicker.onchange=async()=>{previewLanguage=languagePicker.value;await dispatch('classic.ConfigChange',{source:'user_settings'});await drawPreview();};
+register(registerHook);
+await dispatch('session.start');
+await dispatch('command.run',{command:'account-stats',args:'weeks'});
+window.addEventListener('resize',callsToDraw);
+await drawPreview();
+</script></body></html>

@@ -1,0 +1,65 @@
+{
+  "name": "account-stats",
+  "displayName": "Account Stats",
+  "version": "1.3.1",
+  "description": "Local-first daily and weekly-quota statistics, standard API cost estimates and a sidebar that follows the Claude Code language setting.",
+  "author": {
+    "name": "Account Stats contributors"
+  },
+  "license": "MIT",
+  "keywords": [
+    "mod",
+    "desktop",
+    "usage",
+    "tokens",
+    "statistics",
+    "i18n",
+    "localization"
+  ],
+  "userConfig": {
+    "node_path": {
+      "type": "string",
+      "title": "Node.js executable",
+      "description": "Node.js 20 or newer. Leave as node for automatic discovery; an absolute path also works.",
+      "default": "node"
+    },
+    "time_zone": {
+      "type": "string",
+      "title": "Time zone",
+      "description": "IANA time zone for calendar days, including daylight saving. For example Europe/Lisbon or UTC.",
+      "default": "Europe/Lisbon"
+    },
+    "extra_roots": {
+      "type": "string",
+      "title": "Additional transcript directories",
+      "description": "Optional absolute directories containing Claude Code JSONL transcripts. One path per line. Default Claude directories are discovered automatically.",
+      "default": ""
+    },
+    "include_subagents": {
+      "type": "boolean",
+      "title": "Include subagents",
+      "description": "Include recorded subagent requests in daily and model totals.",
+      "default": true
+    },
+    "auto_open": {
+      "type": "boolean",
+      "title": "Open sidebar on session start",
+      "description": "Open without taking keyboard focus. Otherwise use /account-stats.",
+      "default": false
+    },
+    "reset_day": {
+      "type": "number",
+      "title": "Weekly quota reset day",
+      "description": "Day of week, Sunday=0 through Saturday=6. Default: Thursday (4). Can also be changed in the sidebar.",
+      "default": 4,
+      "min": 0,
+      "max": 6
+    },
+    "reset_time": {
+      "type": "string",
+      "title": "Weekly quota reset time",
+      "description": "24-hour HH:mm in the configured IANA time zone. Default: 20:00. Re-groups local history; does not change account limits.",
+      "default": "20:00"
+    }
+  }
+}

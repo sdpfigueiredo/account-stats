@@ -1,0 +1,37 @@
+# Dependencies, editors and OS metadata
+node_modules/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+__pycache__/
+*.pyc
+*.log
+
+# Local Claude configuration and generated declarations
+.claude/
+.claude-plugin/types/
+
+# Never publish credentials, transcripts, usage caches or exported reports
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jsonl
+*.sqlite
+*.sqlite3
+*.db
+*.csv
+/account-stats/
+/exports/
+/records/
+/snapshot.json
+/index.json
+
+# Local validation / generated screenshots (the synthetic HTML preview is tracked)
+/docs/*-results.*
+/preview/*.png
+/coverage/

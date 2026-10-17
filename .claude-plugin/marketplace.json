@@ -1,0 +1,13 @@
+{
+  "name": "account-stats-marketplace",
+  "owner": {
+    "name": "Account Stats contributors"
+  },
+  "plugins": [
+    {
+      "name": "account-stats",
+      "source": "./",
+      "description": "Local-first daily and weekly-quota statistics, standard API cost estimates and a sidebar that follows the Claude Code language setting."
+    }
+  ]
+}
