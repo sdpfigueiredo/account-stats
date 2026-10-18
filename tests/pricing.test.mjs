@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { normalizeUsage, parseTranscriptRow, mergeRecord, total, zero } from '../lib/usage.js';
 import { API_RATES, canonicalModel, priceRecord, costOf, formatCost, formatUsd, costStatus,
-  addPriced, PRICING_VERSION, COST_CSV_HEADERS } from '../lib/pricing.js';
+  addPriced, PRICING_VERSION, PRICING_DATE, COST_CSV_HEADERS } from '../lib/pricing.js';
 import { aggregateRecords, scan, exportCsv } from '../scanner/index.mjs';
 import { makeView } from '../lib/view-model.js';
 import { costSvg as drawCost, chartSvg, modelsSvg } from '../lib/visuals.js';
@@ -122,7 +122,7 @@ test('CSV includes each USD category, range bounds, currency and price date',()=
  const s=aggregate([record({id:'known',write:1e6,input:1e6}),record({id:'unknown',model:'unverified',input:100})]);
  for(const grouping of ['day','week']){
   const csv=exportCsv(s,{range:'all',grouping});for(const header of COST_CSV_HEADERS)assert.ok(csv.includes(header));
-  assert.ok(csv.includes('"9.000000000","12.000000000"'));assert.ok(csv.includes('"unavailable","USD","2026-10-16","",""'));
+  assert.ok(csv.includes('"9.000000000","12.000000000"'));assert.ok(csv.includes(`"unavailable","USD","${PRICING_DATE}","",""`));
  }
 });
 async function fixture(t){
@@ -142,7 +142,7 @@ test('unchanged v1.1.1 source files are automatically enriched with TTL metadata
  const f=await fixture(t),{src,bytes}=await writeSource(f);const first=await scan(f);const cacheFile=await downgradeCache(f);
  const next=await scan(f);assert.equal(next.diagnostics.updatedFiles,1);assert.equal(next.pricing.version,PRICING_VERSION);
  assert.equal(total(next.days[0].models[0]),total(first.days[0].models[0]));assert.equal(next.days[0].models[0].cost.unknownWriteTokens,0);
- assert.equal(JSON.parse(await fs.readFile(cacheFile,'utf8')).detailVersion,2);assert.equal(await fs.readFile(src,'utf8'),bytes);
+ assert.equal(JSON.parse(await fs.readFile(cacheFile,'utf8')).detailVersion,3);assert.equal(await fs.readFile(src,'utf8'),bytes);
  assert.equal((await scan(f)).diagnostics.updatedFiles,0);
 });
 test('deleted old transcripts retain their counts and use an explicit TTL range',async t=>{

@@ -1,6 +1,6 @@
 # Account Stats for Claude Code
 
-**Version 1.3.1 · GitHub-installable marketplace and mod · no build required**
+**Version 1.4.0 · GitHub-installable marketplace and mod · no build required**
 
 A local-first statistics sidebar for **local sessions in the Code tab of Claude Desktop**. The repository contains the complete editable JavaScript source, a local Node.js transcript indexer, tests and a synthetic-data browser preview. It is not a ZIP wrapper, an MCP server or an application that replaces Claude Desktop.
 
@@ -56,7 +56,8 @@ Do **not** delete `~/.claude/account-stats/v1/`: it is the usage index, not the 
 | Tokens | Cache read, cache write, fresh input and output, separately |
 | Breakdown | Per-model totals for the selected period, day or quota |
 | Weekly reset | Configurable weekday, local time and IANA time zone; default Thursday 20:00, Europe/Lisbon |
-| API equivalent | USD cost estimates with a dated price catalogue and cache TTL uncertainty |
+| Request speed | Fast, Standard and Unknown; per-mode requests, tokens, API equivalents and a persistent filter |
+| API equivalent | Response-speed-aware USD estimates with a dated price catalogue, cache TTL uncertainty and explicit unknown-speed assumptions |
 | Language | Follows Claude Code's merged `language` setting; English, Portuguese (PT/BR), Spanish, French, German and Italian |
 | Utilities | Dark/light themes, local CSV exports, source diagnostics and available session rate limits |
 
@@ -72,7 +73,7 @@ The Code `language` setting is not a separately documented Desktop UI locale. Un
 Total = cache read + cache write + fresh input + output
 ```
 
-API equivalent is an estimate using the catalogue shipped in `lib/pricing.js`, not the subscription price or an extra charge. It keeps the pricing verification date from the previous release; this repository-only release does not update prices. Unknown models are identified rather than priced as zero. Unknown cache-write TTL yields a range. See [pricing assumptions](docs/PRICING.md).
+API equivalent is an estimate using the catalogue shipped in `lib/pricing.js`, not the subscription price or an extra charge. The price snapshot was verified on 2026-10-18. Explicit response `usage.speed` selects Fast or Standard pricing; missing or contradictory metadata stays **Unknown**, valued using a clearly labelled standard-rate assumption. That assumption can underestimate actual cost. Unverified model/speed combinations are unpriced, not guessed. Unknown cache-write TTL yields a range; that range does not bound the cost of unknown-speed requests. See [Fast mode evidence and limitations](docs/FAST_MODE.md) and [pricing assumptions](docs/PRICING.md).
 
 ## Commands
 
@@ -121,7 +122,9 @@ hooks/
 lib/
   locales/                # Translation catalogues
   i18n.js                 # Language resolution / regional formatting
-  pricing.js              # Dated model-price catalogue and estimates
+  pricing.js              # Dated model/speed price catalogue and estimates
+  speed.js                # Response-only speed evidence and conflict handling
+  speed-i18n.js           # Localized Fast/Standard/Unknown feature strings
   quota.js                # Weekly reset and DST handling
   usage.js                # Token normalization and aggregation
   view-model.js           # Filtered daily/weekly projections
@@ -159,7 +162,7 @@ Mods execute with the host user's permissions. Review the source and run the off
 
 ## License and validation status
 
-MIT; see [LICENSE](LICENSE). The runtime modules are unchanged from v1.3.0. Version 1.3.1 only prepares GitHub distribution, documentation, repository checks and CI. See [executed checks and limitations](docs/VALIDATION.md). No GitHub repository has been created by preparing these local files, and no real Desktop installation is claimed.
+MIT; see [LICENSE](LICENSE). Version 1.4.0 adds response-speed statistics, filtering and API-equivalent pricing. Existing preferences and the separate usage-history directory are retained; available logs receive one metadata-enrichment pass. See [executed checks and limitations](docs/VALIDATION.md). Local tests do not establish a real Desktop installation or a successful hosted CI run.
 
 ## Official references
 

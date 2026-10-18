@@ -13,10 +13,10 @@ import { parseTranscriptRow, mergeRecord, zero, dayKeyWithFormatter, total } fro
 import { createQuotaClock, quotaSettings, quotaSignature, quotaExportLabel } from '../lib/quota.js';
 import { makeView } from '../lib/view-model.js';
 
-import { addPriced as add, priceRecord, pricingMetadata, PRICING_VERSION, COST_CSV_HEADERS, costCsvCells } from '../lib/pricing.js';
+import { addPriced as add, priceRecord, pricingMetadata, PRICING_VERSION, COST_CSV_HEADERS, costCsvCells, SPEED_CSV_HEADERS, speedCsvCells } from '../lib/pricing.js';
 
 const VERSION = 1; // Keep the existing cache and its archived history.
-const DETAIL_VERSION = 2; // One-time read to recover cache-write TTLs from existing logs.
+const DETAIL_VERSION = 3; // One-time read to recover response usage.speed; keep archived records.
 const hash = text => crypto.createHash('sha256').update(text).digest('hex');
 const MAX_LINE = 32 * 1024 * 1024;
 const ignoredDirs = new Set(['node_modules', '.git', '.cache', 'cache', 'plugins', 'debug', 'usage-data']);
@@ -247,17 +247,16 @@ function csvCell(value) {
 }
 export function exportCsv(snapshot, selection = {}) {
   if (selection.grouping === 'week') return exportWeeklyCsv(snapshot, selection);
-  const header = ['date', 'time_zone', 'model', 'cache_read_tokens', 'cache_write_tokens', 'new_input_tokens', 'output_tokens', 'total_tokens', 'requests', ...COST_CSV_HEADERS];
+  const header = ['date', 'time_zone', 'model', 'cache_read_tokens', 'cache_write_tokens', 'new_input_tokens', 'output_tokens', 'total_tokens', 'requests', ...COST_CSV_HEADERS, ...SPEED_CSV_HEADERS];
   const lines = [header.join(',')];
-  const source = selection.range === 'quota'
-    ? makeView(snapshot, { range: 'quota', model: selection.model, grouping: 'day' }).buckets
-    : snapshot.days;
+  const source = makeView(snapshot, { range: selection.range || 'all', model: selection.model,
+    speed: selection.speed, grouping: 'day' }).buckets;
   for (const day of source) {
     if (selection.start && day.date < selection.start) continue;
     if (selection.end && day.date > selection.end) continue;
     for (const m of day.models) {
       if (selection.model && selection.model !== 'all' && m.id !== selection.model) continue;
-      lines.push([day.date, snapshot.timeZone, m.id, m.read, m.write, m.input, m.output, total(m), m.requests, ...costCsvCells(m)].map(csvCell).join(','));
+      lines.push([day.date, snapshot.timeZone, m.id, m.read, m.write, m.input, m.output, total(m), m.requests, ...costCsvCells(m), ...speedCsvCells(m)].map(csvCell).join(','));
     }
   }
   return '\uFEFF' + lines.join('\r\n') + '\r\n';
@@ -266,11 +265,11 @@ export function exportCsv(snapshot, selection = {}) {
 
 function exportWeeklyCsv(snapshot, selection) {
   if (!snapshot.quota || !Array.isArray(snapshot.weeks)) throw new Error('O índice ainda não tem dados por cota semanal. Atualiza antes de exportar.');
-  const view = makeView(snapshot, { range: selection.range || 'all', model: selection.model, grouping: 'week' });
+  const view = makeView(snapshot, { range: selection.range || 'all', model: selection.model, speed: selection.speed, grouping: 'week' });
   const header = ['quota_start_utc', 'quota_end_utc_exclusive', 'quota_start_local', 'quota_end_local',
     'time_zone', 'reset_day_sunday_0', 'reset_time', 'quota_status', 'range_clipped',
     'observed_from_utc', 'observed_until_utc', 'model', 'cache_read_tokens', 'cache_write_tokens',
-    'new_input_tokens', 'output_tokens', 'total_tokens', 'requests', ...COST_CSV_HEADERS];
+    'new_input_tokens', 'output_tokens', 'total_tokens', 'requests', ...COST_CSV_HEADERS, ...SPEED_CSV_HEADERS];
   const lines = [header.join(',')];
   for (const week of view.buckets) {
     for (const m of week.models.length ? week.models : [{ id: '', ...zero() }]) {
@@ -279,7 +278,7 @@ function exportWeeklyCsv(snapshot, selection) {
         view.quotaSettings.resetDay, view.quotaSettings.resetTime, week.current ? 'in_progress' : 'closed',
         week.clipped ? 'yes' : 'no', new Date(week.observedStartMs).toISOString(),
         new Date(week.observedEndMs).toISOString(), m.id, m.read, m.write, m.input, m.output,
-        total(m), m.requests, ...costCsvCells(m)].map(csvCell).join(','));
+        total(m), m.requests, ...costCsvCells(m), ...speedCsvCells(m)].map(csvCell).join(','));
     }
   }
   return '\uFEFF' + lines.join('\r\n') + '\r\n';

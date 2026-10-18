@@ -608,6 +608,159 @@ const it = {
 };
 
 
+// lib/speed-i18n.js
+/** Localized response-speed presentation. No model calls or runtime translation. */
+const SPEED_MESSAGES = {
+  "en": {
+    "speedFilter": "Request speed",
+    "speedAll": "All speeds",
+    "speed_fast": "Fast",
+    "speed_standard": "Standard",
+    "speed_unknown": "Unknown",
+    "speedPeriod": "Request speed · period",
+    "speedSelection": "Request speed · selection",
+    "speedCoverage": "{known} / {requests} requests with known speed",
+    "speedCounts": "{requests} requests · {tokens} tokens",
+    "speedHelp": "Only response usage.speed identifies the executed mode. The Fast toggle, effort level, service tier and latency are not evidence.",
+    "speedUnknownHelp": "Missing or conflicting speed stays Unknown. Its API equivalent assumes standard rates and may underestimate actual cost; it is not an invoice.",
+    "speedCardNote": "Mode from responses · unknown is not standard",
+    "speedAssumption": "{n} tokens: unknown speed, valued at standard rates.",
+    "pricingHelp": "Official USD rates, checked on {date}. Confirmed Fast requests use Fast rates; unknown speed assumes standard. This is not an invoice or subscription quota.",
+    "exclusions": "Excludes taxes, Batch/contract discounts, regional premiums and tool fees. Unverified model/speed rates remain unpriced.",
+    "chartPricing": "API equivalent by speed · USD · rates {date}",
+    "chartCostAlt": "API chart in USD {grouping}, priced by recorded speed. {values}.",
+    "costNote": "API by recorded speed · rates {date} · excludes taxes / extras",
+    "costAlt": "API equivalent · {title}. {subtitle}. USD {amount}. Cache read {read}; cache write {write}; uncached input {input}; output {output}. {badge}. {tokens} unpriced tokens. Rates {date}, excluding taxes and extra fees."
+  },
+  "pt-PT": {
+    "speedFilter": "Velocidade dos pedidos",
+    "speedAll": "Todos os modos",
+    "speed_fast": "Fast",
+    "speed_standard": "Standard",
+    "speed_unknown": "Desconhecido",
+    "speedPeriod": "Modo dos pedidos · período",
+    "speedSelection": "Modo dos pedidos · seleção",
+    "speedCoverage": "{known} / {requests} pedidos com modo conhecido",
+    "speedCounts": "{requests} pedidos · {tokens} tokens",
+    "speedHelp": "Só usage.speed da resposta identifica o modo executado. O botão Fast, o esforço, o service tier e a latência não são prova.",
+    "speedUnknownHelp": "Modo ausente ou contraditório fica Desconhecido. O equivalente API assume tarifas standard e pode subestimar o custo real; não é uma fatura.",
+    "speedCardNote": "Modo indicado na resposta · desconhecido não é standard",
+    "speedAssumption": "{n} tokens: modo desconhecido, valorizados a tarifa standard.",
+    "pricingHelp": "Tarifas oficiais USD, verificadas em {date}. Fast confirmado usa tarifa Fast; modo desconhecido assume standard. Não é uma fatura nem a cota da subscrição.",
+    "exclusions": "Exclui impostos, descontos Batch/contratuais, prémios regionais e ferramentas. Combinações modelo/modo sem tarifa confirmada ficam sem preço.",
+    "chartPricing": "Equivalente API por modo · USD · tarifas {date}",
+    "chartCostAlt": "Gráfico API em USD {grouping}, valorizado pelo modo registado. {values}.",
+    "costNote": "API pelo modo registado · tarifas {date} · sem impostos / extras",
+    "costAlt": "API equivalente · {title}. {subtitle}. USD {amount}. Cache read {read}; cache write {write}; input novo {input}; output {output}. {badge}. {tokens} tokens sem preço. Tarifas {date}, sem impostos nem extras."
+  },
+  "es": {
+    "speedFilter": "Velocidad de solicitudes",
+    "speedAll": "Todos los modos",
+    "speed_fast": "Fast",
+    "speed_standard": "Estándar",
+    "speed_unknown": "Desconocido",
+    "speedPeriod": "Modo de solicitudes · período",
+    "speedSelection": "Modo de solicitudes · selección",
+    "speedCoverage": "{known} / {requests} solicitudes con modo conocido",
+    "speedCounts": "{requests} solicitudes · {tokens} tokens",
+    "speedHelp": "Solo usage.speed de la respuesta identifica el modo ejecutado. El botón Fast, el esfuerzo, el nivel de servicio y la latencia no son pruebas.",
+    "speedUnknownHelp": "Un modo ausente o contradictorio queda Desconocido. Su equivalente API supone tarifas estándar y puede subestimar el coste real; no es una factura.",
+    "speedCardNote": "Modo de la respuesta · desconocido no es estándar",
+    "speedAssumption": "{n} tokens: modo desconocido, valorados a tarifa estándar.",
+    "pricingHelp": "Tarifas oficiales USD, verificadas el {date}. Fast confirmado usa tarifas Fast; modo desconocido supone estándar. No es una factura ni la cuota de suscripción.",
+    "exclusions": "Excluye impuestos, descuentos Batch/contractuales, recargos regionales y herramientas. Los pares modelo/modo sin tarifa verificada quedan sin precio.",
+    "chartPricing": "Equivalente API por modo · USD · tarifas {date}",
+    "chartCostAlt": "Gráfico API en USD {grouping}, valorado por el modo registrado. {values}.",
+    "costNote": "API por modo registrado · tarifas {date} · sin impuestos / extras",
+    "costAlt": "API equivalente · {title}. {subtitle}. USD {amount}. Cache read {read}; cache write {write}; entrada nueva {input}; salida {output}. {badge}. {tokens} tokens sin precio. Tarifas {date}, sin impuestos ni extras."
+  },
+  "fr": {
+    "speedFilter": "Vitesse des requêtes",
+    "speedAll": "Tous les modes",
+    "speed_fast": "Fast",
+    "speed_standard": "Standard",
+    "speed_unknown": "Inconnu",
+    "speedPeriod": "Mode des requêtes · période",
+    "speedSelection": "Mode des requêtes · sélection",
+    "speedCoverage": "{known} / {requests} requêtes au mode connu",
+    "speedCounts": "{requests} requêtes · {tokens} tokens",
+    "speedHelp": "Seul usage.speed de la réponse indique le mode exécuté. Le bouton Fast, l’effort, le niveau de service et la latence ne sont pas des preuves.",
+    "speedUnknownHelp": "Un mode absent ou contradictoire reste Inconnu. Son équivalent API suppose les tarifs standard et peut sous-estimer le coût réel ; ce n’est pas une facture.",
+    "speedCardNote": "Mode de la réponse · inconnu ne signifie pas standard",
+    "speedAssumption": "{n} tokens : mode inconnu, valorisés au tarif standard.",
+    "pricingHelp": "Tarifs officiels USD, vérifiés le {date}. Fast confirmé utilise les tarifs Fast ; un mode inconnu suppose le standard. Ce n’est ni une facture ni le quota de l’abonnement.",
+    "exclusions": "Hors taxes, remises Batch/contractuelles, suppléments régionaux et outils. Les couples modèle/mode sans tarif vérifié restent sans prix.",
+    "chartPricing": "Équivalent API par mode · USD · tarifs {date}",
+    "chartCostAlt": "Graphique API en USD {grouping}, valorisé selon le mode enregistré. {values}.",
+    "costNote": "API par mode enregistré · tarifs {date} · hors taxes / extras",
+    "costAlt": "Équivalent API · {title}. {subtitle}. USD {amount}. Cache read {read} ; cache write {write} ; entrée nouvelle {input} ; sortie {output}. {badge}. {tokens} tokens sans prix. Tarifs {date}, hors taxes et frais supplémentaires."
+  },
+  "de": {
+    "speedFilter": "Anfragegeschwindigkeit",
+    "speedAll": "Alle Modi",
+    "speed_fast": "Fast",
+    "speed_standard": "Standard",
+    "speed_unknown": "Unbekannt",
+    "speedPeriod": "Anfragemodus · Zeitraum",
+    "speedSelection": "Anfragemodus · Auswahl",
+    "speedCoverage": "{known} / {requests} Anfragen mit bekanntem Modus",
+    "speedCounts": "{requests} Anfragen · {tokens} Tokens",
+    "speedHelp": "Nur usage.speed der Antwort belegt den ausgeführten Modus. Fast-Schalter, Denkaufwand, Service-Tier und Latenz sind kein Nachweis.",
+    "speedUnknownHelp": "Fehlende oder widersprüchliche Angaben bleiben Unbekannt. Das API-Äquivalent nimmt Standardtarife an und kann reale Kosten unterschätzen; es ist keine Rechnung.",
+    "speedCardNote": "Modus aus der Antwort · unbekannt ist nicht Standard",
+    "speedAssumption": "{n} Tokens: Modus unbekannt, mit Standardtarifen bewertet.",
+    "pricingHelp": "Offizielle USD-Tarife, geprüft am {date}. Bestätigte Fast-Anfragen nutzen Fast-Tarife; unbekannter Modus nimmt Standard an. Keine Rechnung oder Abo-Quote.",
+    "exclusions": "Ohne Steuern, Batch-/Vertragsrabatte, regionale Zuschläge und Werkzeuge. Modell/Modus-Paare ohne bestätigten Tarif bleiben unbepreist.",
+    "chartPricing": "API-Äquivalent nach Modus · USD · Tarife {date}",
+    "chartCostAlt": "API-Diagramm in USD {grouping}, nach erfasstem Modus bewertet. {values}.",
+    "costNote": "API nach erfasstem Modus · Tarife {date} · ohne Steuern / Extras",
+    "costAlt": "API-Äquivalent · {title}. {subtitle}. USD {amount}. Cache read {read}; Cache write {write}; neue Eingabe {input}; Ausgabe {output}. {badge}. {tokens} Tokens ohne Preis. Tarife {date}, ohne Steuern und Zusatzgebühren."
+  },
+  "it": {
+    "speedFilter": "Velocità delle richieste",
+    "speedAll": "Tutte le modalità",
+    "speed_fast": "Fast",
+    "speed_standard": "Standard",
+    "speed_unknown": "Sconosciuta",
+    "speedPeriod": "Modalità richieste · periodo",
+    "speedSelection": "Modalità richieste · selezione",
+    "speedCoverage": "{known} / {requests} richieste con modalità nota",
+    "speedCounts": "{requests} richieste · {tokens} token",
+    "speedHelp": "Solo usage.speed della risposta identifica la modalità eseguita. Il pulsante Fast, lo sforzo, il livello di servizio e la latenza non sono prove.",
+    "speedUnknownHelp": "Una modalità assente o contraddittoria resta Sconosciuta. L’equivalente API assume tariffe standard e può sottostimare il costo reale; non è una fattura.",
+    "speedCardNote": "Modalità della risposta · sconosciuta non è standard",
+    "speedAssumption": "{n} token: modalità sconosciuta, valutati a tariffa standard.",
+    "pricingHelp": "Tariffe ufficiali USD, verificate il {date}. Fast confermato usa tariffe Fast; modalità sconosciuta assume standard. Non è una fattura né la quota dell’abbonamento.",
+    "exclusions": "Esclude imposte, sconti Batch/contrattuali, maggiorazioni regionali e strumenti. Le coppie modello/modalità senza tariffa verificata restano senza prezzo.",
+    "chartPricing": "Equivalente API per modalità · USD · tariffe {date}",
+    "chartCostAlt": "Grafico API in USD {grouping}, valutato per modalità registrata. {values}.",
+    "costNote": "API per modalità registrata · tariffe {date} · senza imposte / extra",
+    "costAlt": "API equivalente · {title}. {subtitle}. USD {amount}. Cache read {read}; cache write {write}; nuovo input {input}; output {output}. {badge}. {tokens} token senza prezzo. Tariffe {date}, senza imposte né extra."
+  },
+  "pt-BR": {
+    "speedFilter": "Velocidade das solicitações",
+    "speedAll": "Todos os modos",
+    "speed_fast": "Fast",
+    "speed_standard": "Standard",
+    "speed_unknown": "Desconhecido",
+    "speedPeriod": "Modo das solicitações · período",
+    "speedSelection": "Modo das solicitações · seleção",
+    "speedCoverage": "{known} / {requests} solicitações com modo conhecido",
+    "speedCounts": "{requests} solicitações · {tokens} tokens",
+    "speedHelp": "Só usage.speed da resposta identifica o modo executado. O botão Fast, o esforço, o service tier e a latência não são prova.",
+    "speedUnknownHelp": "Modo ausente ou contraditório fica Desconhecido. O equivalente API assume tarifas standard e pode subestimar o custo real; não é uma fatura.",
+    "speedCardNote": "Modo indicado na resposta · desconhecido não é standard",
+    "speedAssumption": "{n} tokens: modo desconhecido, valorizados a tarifa standard.",
+    "pricingHelp": "Tarifas oficiais USD, verificadas em {date}. Fast confirmado usa tarifa Fast; modo desconhecido assume padrão. Não é uma fatura nem a cota da assinatura.",
+    "exclusions": "Exclui impostos, descontos Batch/contratuais, prémios regionais e ferramentas. Combinações modelo/modo sem tarifa confirmada ficam sem preço.",
+    "chartPricing": "Equivalente API por modo · USD · tarifas {date}",
+    "chartCostAlt": "Gráfico API em USD {grouping}, valorizado pelo modo registado. {values}.",
+    "costNote": "API pelo modo registado · tarifas {date} · sem impostos / extras",
+    "costAlt": "API equivalente · {title}. {subtitle}. USD {amount}. Cache read {read}; cache write {write}; input novo {input}; output {output}. {badge}. {tokens} tokens sem preço. Tarifas {date}, sem impostos nem extras."
+  }
+};
+
+
 // lib/i18n.js
 /** Pure presentation-only i18n. No DOM, Node, host, network or mutable locale. */
 
@@ -617,7 +770,10 @@ const it = {
 
 
 
-const CATALOGUES = Object.freeze({ en, 'pt-PT': ptPT, 'pt-BR': ptBR, es, fr, de, it });
+
+const CATALOGUES = Object.freeze(Object.fromEntries(
+  Object.entries({ en, 'pt-PT': ptPT, 'pt-BR': ptBR, es, fr, de, it })
+    .map(([locale, messages]) => [locale, Object.freeze({...messages, ...SPEED_MESSAGES[locale]})])));
 const aliases = {
   'brazilian portuguese':'pt-BR', 'portuguese (brazil)':'pt-BR', 'português (brasil)':'pt-BR',
   'português brasileiro':'pt-BR', 'portugues brasileiro':'pt-BR',
@@ -706,8 +862,34 @@ function createI18n(language='en-US') {
 }
 
 
+// lib/speed.js
+/** Response evidence only. Requested mode, service tier and latency are NOT proof. */
+const SPEEDS = Object.freeze(['fast', 'standard', 'unknown']);
+function normalizeSpeed(value) {
+  return value === 'fast' || value === 'standard' ? value : 'unknown';
+}
+function speedOf(record) {
+  return record?.speedConflict === true ? 'unknown' : normalizeSpeed(record?.speed);
+}
+function speedFilter(value) {
+  return SPEEDS.includes(value) ? value : 'all';
+}
+/** Missing metadata can be enriched; contradictory response evidence stays unknown.
+ * A sticky conflict flag makes merging commutative and independent of file order.
+ */
+function mergeSpeed(a, b) {
+  const left = speedOf(a), right = speedOf(b);
+  if (a?.speedConflict === true || b?.speedConflict === true ||
+      (left !== 'unknown' && right !== 'unknown' && left !== right)) {
+    return { speed: 'unknown', speedConflict: true };
+  }
+  return { speed: left === 'unknown' ? right : left };
+}
+
+
 // lib/usage.js
 /** Pure, dependency-free token normalization. Never copies prompt or answer text. */
+
 const METRICS = ['read', 'write', 'input', 'output'];
 const zero = () => ({ read: 0, write: 0, input: 0, output: 0, requests: 0 });
 function count(value) {
@@ -723,6 +905,7 @@ function normalizeUsage(usage) {
     : count(detail?.ephemeral_5m_input_tokens) + count(detail?.ephemeral_1h_input_tokens);
   const five = count(detail?.ephemeral_5m_input_tokens), hour = count(detail?.ephemeral_1h_input_tokens);
   return {
+    speed: normalizeSpeed(usage.speed),
     read: count(usage.cache_read_input_tokens),
     // The top-level creation count ALREADY includes the 5m and 1h buckets.
     write,
@@ -741,8 +924,8 @@ function add(target, value) {
 }
 /** Repeated blocks of the SAME response carry cumulative usage, not new requests. */
 function mergeRecord(a, b) {
-  if (!a) return { ...b };
-  const out = { ...a, timestamp: Math.min(a.timestamp, b.timestamp) };
+  if (!a) return { ...b, ...mergeSpeed(null, b) };
+  const out = { ...a, ...mergeSpeed(a, b), timestamp: Math.min(a.timestamp, b.timestamp) };
   for (const k of METRICS) out[k] = Math.max(count(a[k]), count(b[k]));
   out.write5m = Math.max(count(a.write5m), count(b.write5m));
   out.write1h = Math.max(count(a.write1h), count(b.write1h));
@@ -810,13 +993,14 @@ function escapeXml(text) {
 
 
 // lib/pricing.js
-/** Current standard first-party API equivalent, not a bill or historical price.
+/** Current first-party API equivalent by recorded response speed, not a bill or historical price.
  * Official sources and scope: docs/PRICING.md. No network or guessed model rates.
  * Price each de-duplicated request BEFORE aggregating (Haiku 5.5 has a prompt tier).
  */
 
-const PRICING_DATE = '2026-10-16';
-const PRICING_VERSION = '2026-10-16-standard-v1';
+
+const PRICING_DATE = '2026-10-18';
+const PRICING_VERSION = '2026-10-18-speed-v2';
 const PRICING_SOURCE = 'https://platform.claude.com/docs/en/about-claude/pricing';
 // USD per one million tokens. Read multipliers are model-specific, not always 0.1x.
 const rate = (input, output, read) => ({ input, output, read, write5m: input*1.25, write1h: input*2 });
@@ -844,6 +1028,12 @@ const API_RATES = Object.freeze({
   'claude-haiku-4-5': rate(1,5,.1),
   'claude-haiku-3-5': rate(.8,4,.08),
 });
+// Only current, explicitly documented Fast tariffs. No family-wide multiplier.
+const FAST_API_RATES = Object.freeze({
+  'claude-opus-5-5': rate(8,40,.4),
+  'claude-opus-5': rate(10,50,1),
+  'claude-opus-4-8': rate(10,50,1),
+});
 function canonicalModel(id) {
   let value = String(id || '').trim().toLowerCase();
   value = value.replace(/^(?:(?:global|us|eu|apac)\.)?anthropic\./,'')
@@ -852,7 +1042,7 @@ function canonicalModel(id) {
   return Object.hasOwn(API_RATES, value) ? value : null;
 }
 const zeroCost = () => ({ read:0, write:0, input:0, output:0, writeMax:0, total:0, totalMax:0,
-  pricedTokens:0, unpricedTokens:0, pricedRequests:0, unpricedRequests:0, unknownWriteTokens:0 });
+  pricedTokens:0, unpricedTokens:0, pricedRequests:0, unpricedRequests:0, unknownWriteTokens:0, assumedStandardTokens:0, assumedStandardRequests:0 });
 function unknownCost(value) {
   return { ...zeroCost(), unpricedTokens:total(value), unpricedRequests:count(value?.requests) || (total(value) ? 1 : 0) };
 }
@@ -870,12 +1060,30 @@ function addCost(target, value) {
   }
   return target;
 }
-/** Add tokens and independently add their already-calculated request costs. */
+/** One disjoint speed bucket. Old aggregates without evidence are unknown. */
+function speedTotals(value, speed) {
+  const source = value?.speeds ? value.speeds[speed]
+    : speedOf(value) === speed ? value : null;
+  const bucket = { speed, ...zero(), cost:zeroCost() };
+  if (!source) return bucket;
+  for (const key of [...METRICS, 'requests']) bucket[key] = count(source[key]);
+  bucket.cost = addCost(zeroCost(), costOf(source));
+  return bucket;
+}
+/** Add tokens, pre-priced costs and disjoint speed subtotals without recursion. */
 function addPriced(target, value) {
   const prior = target.cost || unknownCost(target);
   const incoming = costOf(value);
+  const speeds = {};
+  for (const speed of SPEEDS) {
+    const bucket = speedTotals(target, speed), next = speedTotals(value, speed);
+    add(bucket, next);
+    addCost(bucket.cost, next.cost);
+    speeds[speed] = bucket;
+  }
   add(target,value);
   target.cost = addCost(prior,incoming);
+  target.speeds = speeds;
   return target;
 }
 function priceRecord(record) {
@@ -884,7 +1092,9 @@ function priceRecord(record) {
   if (!tokens) return zeroCost();
   if (!id) return unknownCost(record);
   const prompt = count(record.read)+count(record.write)+count(record.input);
-  const base = API_RATES[id];
+  const speed = speedOf(record);
+  const base = speed === 'fast' ? FAST_API_RATES[id] : API_RATES[id];
+  if (!base) return unknownCost(record); // Never value an unverified Fast model as standard.
   if (base.maxVerifiedPrompt && prompt > base.maxVerifiedPrompt) return unknownCost(record);
   const r = base.threshold && prompt > base.threshold ? base.long : base;
   let five = count(record.write5m), hour = count(record.write1h);
@@ -896,7 +1106,11 @@ function priceRecord(record) {
     read:count(record.read)*r.read/1e6, input:count(record.input)*r.input/1e6, output:count(record.output)*r.output/1e6,
     write:(five*r.write5m+hour*r.write1h+unknown*r.write5m)/1e6,
     writeMax:(five*r.write5m+hour*r.write1h+unknown*r.write1h)/1e6,
-    pricedTokens:tokens, pricedRequests:count(record.requests)||1, unknownWriteTokens:unknown };
+    pricedTokens:tokens, pricedRequests:count(record.requests)||1, unknownWriteTokens:unknown,
+    // Retain the previous standard-equivalent estimate, but explicitly flag the
+    // assumption. Unknown speed is never counted as an observed Standard request.
+    assumedStandardTokens:speed === 'unknown' ? tokens : 0,
+    assumedStandardRequests:speed === 'unknown' ? count(record.requests)||1 : 0 };
   cost.total = cost.read+cost.write+cost.input+cost.output;
   cost.totalMax = cost.read+cost.writeMax+cost.input+cost.output;
   for (const key of MONEY_FIELDS) cost[key]=addMoney(0,cost[key]);
@@ -922,16 +1136,29 @@ function formatCost(cost, key='total') {
   return Math.abs(high-low)>1e-10 ? formatUsd(low)+' – '+formatUsd(high) : formatUsd(low);
 }
 function pricingMetadata() {
-  return { version:PRICING_VERSION, asOf:PRICING_DATE, currency:'USD', basis:'current-standard-api-equivalent', source:PRICING_SOURCE };
+  return { version:PRICING_VERSION, asOf:PRICING_DATE, currency:'USD', basis:'current-api-equivalent-by-response-speed', unknownSpeedBasis:'standard-assumption', source:PRICING_SOURCE };
 }
 const COST_CSV_HEADERS = ['api_cost_status','api_cost_currency','api_price_date','api_equivalent_usd_min','api_equivalent_usd_max',
   'api_cache_read_usd','api_cache_write_usd_min','api_cache_write_usd_max','api_input_usd','api_output_usd',
-  'api_priced_tokens','api_unpriced_tokens','cache_write_unknown_ttl_tokens'];
+  'api_priced_tokens','api_unpriced_tokens','cache_write_unknown_ttl_tokens',
+  'api_standard_assumed_tokens','api_standard_assumed_requests'];
 function costCsvCells(value) {
   const c=costOf(value), status=costStatus(c);
   const money=n=>status==='unavailable'?'':n.toFixed(9);
   return [status,'USD',PRICING_DATE,...[c.total,c.totalMax,c.read,c.write,c.writeMax,c.input,c.output].map(money),
-    c.pricedTokens,c.unpricedTokens,c.unknownWriteTokens];
+    c.pricedTokens,c.unpricedTokens,c.unknownWriteTokens,c.assumedStandardTokens,c.assumedStandardRequests];
+}
+
+// Appended columns keep all pre-existing CSV column positions stable.
+const SPEED_CSV_HEADERS = SPEEDS.flatMap(speed =>
+  ['requests','cache_read_tokens','cache_write_tokens','new_input_tokens','output_tokens',
+    'total_tokens','api_equivalent_usd_min','api_equivalent_usd_max'].map(key => speed+'_'+key));
+function speedCsvCells(value) {
+  return SPEEDS.flatMap(speed => {
+    const b=speedTotals(value,speed), c=b.cost;
+    const money=n=>costStatus(c)==='unavailable'?'':n.toFixed(9);
+    return [b.requests,b.read,b.write,b.input,b.output,total(b),money(c.total),money(c.totalMax)];
+  });
 }
 
 
@@ -1040,11 +1267,14 @@ function quotaExportLabel(timestamp, timeZone, includeYear = true) {
 
 
 
+
 const PAGE_DAYS = 45;
 const PAGE_WEEKS = 20;
 const RANGE_VALUES = ['all', '30d', '7d', 'quota'];
-function collectModels(day, model) {
-  const models = (day?.models || []).filter(x => model === 'all' || x.id === model);
+function collectModels(day, model, speed = 'all') {
+  const selected = (day?.models || []).filter(x => model === 'all' || x.id === model);
+  const models = speed === 'all' ? selected : selected.map(m => ({id:m.id, ...speedTotals(m,speed)}))
+    .filter(m => m.requests > 0 || total(m) > 0);
   const values = zero();
   for (const m of models) addPriced(values, m);
   return { date: day?.date, ...values, models };
@@ -1080,7 +1310,8 @@ function makeView(snapshot, preferences = {}) {
   const first = allSource.find(d => d.date <= today)?.date || today;
   const start = range === 'quota' ? currentQuota.date : range === 'all' ? first : moveDay(today, range === '7d' ? -6 : -29);
   const model = typeof preferences.model === 'string' ? preferences.model : 'all';
-  const common = { range, grouping, start, end: today, currentQuota, quotaSettings: clock.settings, quotaReady,
+  const speed = speedFilter(preferences.speed);
+  const common = { speed, range, grouping, start, end: today, currentQuota, quotaSettings: clock.settings, quotaReady,
     dayCount: Math.max(1, daysBetween(start, today)),
     allModels: [...new Set(allSource.flatMap(d => (d.models || []).map(m => m.id)))].sort(),
     model, timeZone, generatedAt: snapshot?.generatedAt || null, asOf: now,
@@ -1093,10 +1324,10 @@ function makeView(snapshot, preferences = {}) {
   const page = clampPage(preferences.page, pageCount);
   const pageEnd = moveDay(today, -page * PAGE_DAYS);
   const pageStart = moveDay(pageEnd, -Math.min(PAGE_DAYS, common.dayCount-page*PAGE_DAYS)+1);
-  const buckets = source.filter(d => d.date >= start && d.date <= today).map(d => collectModels(d, model));
+  const buckets = source.filter(d => d.date >= start && d.date <= today).map(d => collectModels(d, model, speed));
   const summary = summarize(buckets);
   const chartDays = [];
-  for (let date = pageStart; date <= pageEnd; date = moveDay(date, 1)) chartDays.push({ ...collectModels(available.get(date), model), date });
+  for (let date = pageStart; date <= pageEnd; date = moveDay(date, 1)) chartDays.push({ ...collectModels(available.get(date), model, speed), date });
   const day = chartDays.find(d => d.date === preferences.day) || chartDays.at(-1);
   return { ...common, ...summary, activeDays: summary.active, buckets, page, pageCount, pageStart, pageEnd, chartDays, day };
 }
@@ -1105,7 +1336,7 @@ function clampPage(page, pageCount) {
   return Math.max(0, Math.min(pageCount-1, value));
 }
 function weeklyView(snapshot, preferences, common, clock) {
-  const { range, currentQuota, start, end, model, asOf: now } = common;
+  const { range, currentQuota, start, end, model, speed, asOf: now } = common;
   const windowStart = range === 'quota' ? currentQuota.startMs : clock.at(start, '00:00');
   const firstPeriod = range === 'quota' ? currentQuota
     : range === 'all' ? (common.quotaReady && snapshot.weeks.length ? clock.periodFromDate(snapshot.weeks[0].date) : currentQuota)
@@ -1116,7 +1347,7 @@ function weeklyView(snapshot, preferences, common, clock) {
     const period = clock.periodFromDate(date);
     const source = weekMap.get(period.id);
     const days = (source?.days || []).filter(d => (range === 'all' || range === 'quota' || d.date >= start) && d.date <= end)
-      .map(d => collectModels(d, model));
+      .map(d => collectModels(d, model, speed));
     const summary = summarize(days);
     for (const day of days) if (day.requests > 0) activeDays.add(day.date);
     const isCurrent = period.id === currentQuota.id;
@@ -1147,6 +1378,7 @@ function chartValue(day, mode) {
 
 
 // lib/visuals.js
+
 
 
 
@@ -1299,7 +1531,7 @@ function costSvg(value, title, subtitle, theme='dark', language='en-US') {
   const l = createI18n(language), { t } = l;
   const labels = Object.fromEntries(['read','write','input','output'].map(k=>[k,t(k)]));
   const dateLabel = date => l.date(date,true);
-  const p=palette(theme), c=costOf(value), status=costStatus(c), h=286;
+  const p=palette(theme), c=costOf(value), status=costStatus(c), h=c.assumedStandardTokens?306:286;
   let b=rect(1,1,478,h-5,p.card,18,p.stroke);
   b+=rect(20,19,3,18,p.accent,1.5);
   b+=text(32,32,title,12,p.text,600,'',390);
@@ -1321,7 +1553,8 @@ function costSvg(value, title, subtitle, theme='dark', language='en-US') {
   if(c.unpricedTokens) note=t('costUnpriced',{tokens:l.compact(c.unpricedTokens)});
   else if(c.unknownWriteTokens) note=t('costUnknownTtl');
   b+=text(20,261,note,9,p.subtle);
-  return wrap(h,b,t('costAlt',{title,subtitle,amount,read:l.price(c,'read'),write:l.price(c,'write'),input:l.price(c,'input'),output:l.price(c,'output'),badge,tokens:l.integer(c.unpricedTokens),date:l.date(PRICING_DATE)}));
+  if(c.assumedStandardTokens) b+=text(20,281,t('speedAssumption',{n:l.compact(c.assumedStandardTokens)}),9,p.output);
+  return wrap(h,b,t('costAlt',{title,subtitle,amount,read:l.price(c,'read'),write:l.price(c,'write'),input:l.price(c,'input'),output:l.price(c,'output'),badge,tokens:l.integer(c.unpricedTokens),date:l.date(PRICING_DATE)})+(c.assumedStandardTokens?' '+t('speedAssumption',{n:l.integer(c.assumedStandardTokens)}):''));
 }
 
 /** Selected quota totals, kept distinct from totals of the entire range.
@@ -1396,8 +1629,33 @@ function statusSvg(title, message, theme='dark', isError=false) {
   return wrap(110,b,title+'. '+message);
 }
 
+/** Response speed is independent of the model, effort level and subscription quota. */
+function speedSvg(value, title, theme='dark', language='en-US') {
+  const l=createI18n(language), {t}=l, p=palette(theme), h=274;
+  const buckets=SPEEDS.map(speed=>speedTotals(value,speed));
+  const known=buckets[0].requests+buckets[1].requests;
+  let b=rect(1,1,478,h-5,p.card,18,p.stroke);
+  b+=text(20,27,title,14,p.text,600);
+  b+=text(20,48,t('speedCoverage',{known:l.integer(known),requests:l.integer(value?.requests||0)}),10,p.mute);
+  const alts=[title,t('speedHelp')];
+  buckets.forEach((bucket,i)=>{
+    const y=76+i*59, color=[p.output,p.write,p.subtle][i];
+    const label=t(`speed_${bucket.speed}`), detail=t('speedCounts',{requests:l.integer(bucket.requests),tokens:l.integer(total(bucket))});
+    b+=rect(20,y-8,4,13,color,2);
+    b+=text(34,y+3,label,12,color,600,'',206);
+    const cost=l.price(bucket.cost);
+    b+=text(460,y+3,cost,12,p.text,550,'text-anchor="end"',210);
+    b+=text(34,y+23,detail,10,p.mute);
+    if(i<2)b+=rect(20,y+37,440,1,p.stroke);
+    alts.push(label+': '+detail+'; API '+cost);
+  });
+  b+=text(20,255,t('speedCardNote'),9,p.subtle);
+  return wrap(h,b,alts.join('. ')+'. '+t('speedUnknownHelp'));
+}
+
 
 // hooks/register.js
+
 
 /**
  * Claude Code Desktop mod. Only official function hooks / $ APIs.
@@ -1410,10 +1668,10 @@ function statusSvg(title, message, theme='dark', isError=false) {
 
 
 const PANE = 'account-stats';
-const KEYS = ['range','model','mode','theme','nodePath','timeZone','extraRoots','includeSubagents','grouping','resetDay','resetTime'];
+const KEYS = ['range','model','speed','mode','theme','nodePath','timeZone','extraRoots','includeSubagents','grouping','resetDay','resetTime'];
 
 let configuration = {};
-let prefs = { range: '30d', model: 'all', mode: 'total', theme: 'dark', page: 0, day: '', week: '', grouping: 'day',
+let prefs = { range: '30d', model: 'all', speed: 'all', mode: 'total', theme: 'dark', page: 0, day: '', week: '', grouping: 'day',
       resetDay: configuration.reset_day ?? 4, resetTime: configuration.reset_time ?? '20:00',
   nodePath: configuration.node_path || 'node', timeZone: configuration.time_zone || 'Europe/Lisbon',
   extraRoots: configuration.extra_roots || '', includeSubagents: configuration.include_subagents !== false };
@@ -1508,7 +1766,7 @@ async function refresh($, action = 'scan') {
     const config = { timeZone: prefs.timeZone, resetDay: prefs.resetDay, resetTime: prefs.resetTime, includeSubagents: prefs.includeSubagents,
       extraRoots: [...String(prefs.extraRoots || '').split(/[\n;]/).map(s => s.trim()).filter(Boolean), ...extraTranscriptRoots],
       action, budgetMs: 18000,
-      selection: { start: view.start, end: view.end, model: view.model, range: view.range, grouping: view.grouping } };
+      selection: { start: view.start, end: view.end, model: view.model, speed: view.speed, range: view.range, grouping: view.grouping } };
     const script = $.plugin.root.replace(/[\\/]$/, '') + '/scanner/index.mjs';
     const result = await $.process.run([executable, script], { stdin: JSON.stringify(config), timeoutMs: 120000 });
     let parsed;
@@ -1543,7 +1801,7 @@ async function open($, focus = true) {
 
 function register(on, options = {}) {
     configuration = options;
-    prefs = { range: '30d', model: 'all', mode: 'total', theme: 'dark', page: 0, day: '', week: '', grouping: 'day',
+    prefs = { range: '30d', model: 'all', speed: 'all', mode: 'total', theme: 'dark', page: 0, day: '', week: '', grouping: 'day',
       resetDay: configuration.reset_day ?? 4, resetTime: configuration.reset_time ?? '20:00',
       nodePath: configuration.node_path || 'node', timeZone: configuration.time_zone || 'Europe/Lisbon',
       extraRoots: configuration.extra_roots || '', includeSubagents: configuration.include_subagents !== false };
@@ -1562,6 +1820,7 @@ function register(on, options = {}) {
       }
     } catch { /* Default preferences remain usable. */ }
     if (!['dark','light'].includes(prefs.theme)) prefs.theme = 'dark';
+    prefs.speed = speedFilter(prefs.speed);
     if (!['day','week'].includes(prefs.grouping)) prefs.grouping = 'day';
     try { quotaSettings(prefs); }
     catch { prefs.resetDay = 4; prefs.resetTime = '20:00'; prefs.timeZone = 'Europe/Lisbon'; notice = message('errorResetConfig'); }
@@ -1656,8 +1915,12 @@ function register(on, options = {}) {
       cards.push(Select({key:'model',label:t('model'),value:view.model,
         options:[{value:'all',label:t('allModels')},...view.allModels.map(id=>({value:id,label:id}))],
         onSelect:value=>change($,{model:value,day:'',page:0})}));
+      cards.push(Select({key:'speed',label:t('speedFilter'),value:view.speed,
+        options:[{value:'all',label:t('speedAll')},...SPEEDS.map(speed=>({value:speed,label:t(`speed_${speed}`)}))],
+        onSelect:value=>change($,{speed:speedFilter(value),day:'',week:'',page:0})}));
       cards.push(svg(overviewSvg(view,prefs.theme,l)));
       cards.push(svg(costSvg(view.totals,t('costPeriod'),t('periodSubtitle',{start:l.date(view.start),end:l.date(view.end)}),prefs.theme,l)));
+      cards.push(svg(speedSvg(view.totals,t('speedPeriod'),prefs.theme,l)));
       if (needsQuota) cards.push(line(t('reset',{day:l.weekday(prefs.resetDay),time:prefs.resetTime,zone:view.timeZone})));
       if (view.range==='quota') cards.push(line(t('currentInterval',{interval:intervalLabel(view.currentQuota,true)})));
       if (weekly && view.clippedWeeks) cards.push(line(t('clippedHelp')));
@@ -1683,6 +1946,7 @@ function register(on, options = {}) {
       }
       cards.push(svg(costSvg(view.day,t(weekly?'costWeek':'costDay'),
         weekly?intervalLabel(view.day)+(view.day.clipped?' · '+t('partialFilter'):''):l.date(view.day.date),prefs.theme,l)));
+      cards.push(svg(speedSvg(view.day,t('speedSelection'),prefs.theme,l)));
       cards.push(row([
         button('daily-models',(periodModels?'':'● ')+t(weekly?'modelsWeek':'modelsDay'),()=>{periodModels=false;modelPage=0;redraw($);},periodModels),
         button('period-models',(periodModels?'● ':'')+t('inPeriod'),()=>{periodModels=true;modelPage=0;redraw($);},!periodModels),
@@ -1744,6 +2008,8 @@ function register(on, options = {}) {
       cards.push(line(t('pricingHeading'),false));
       cards.push(line(t('pricingHelp',{date:l.date(PRICING_DATE)})));
       cards.push(line(t('ttlHelp')));
+      cards.push(line(t('speedHelp')));
+      cards.push(line(t('speedUnknownHelp')));
       cards.push(line(t('exclusions')));
     }
     if (diagnostics) {
@@ -1817,18 +2083,19 @@ function withDemoQuota(snapshot, options={}) {
         const values={};
         for(const k of ['read','write','input','output','requests']) values[k]=i===0?Math.floor(model[k]*.65):model[k]-Math.floor(model[k]*.65);
         // Synthetic per-request splits; never price a day as one Haiku prompt.
-        values.cost=zeroCost();
+        const pricedValues=zero();
         const requests=Math.max(1,values.requests);
         for(let r=0;r<requests;r++) {
           const rec={model:model.id,requests:1};
           for(const k of ['read','write','input','output']) rec[k]=Math.floor(values[k]/requests)+(r<values[k]%requests?1:0);
           // Most demonstration writes use 1h; a few missing TTLs illustrate ranges.
           if(Number(day.date.slice(-2))%11!==0) {rec.write1h=Math.floor(rec.write*.8);rec.write5m=rec.write-rec.write1h;}
-          addCost(values.cost,priceRecord(rec));
+          rec.speed = r%9===0 ? 'unknown' : model.id==='claude-opus-5-5' && r%3===0 ? 'fast' : 'standard';
+          addPriced(pricedValues,{...rec,cost:priceRecord(rec)});
         }
         for(const map of [wk.byDate.get(date),byDate.get(date)]) {
           if(!map.has(model.id)) map.set(model.id,{id:model.id,...zero()});
-          addPriced(map.get(model.id),values);
+          addPriced(map.get(model.id),pricedValues);
         }
       }
     }

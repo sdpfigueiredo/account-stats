@@ -4,7 +4,7 @@
 
 `hooks/register.js` is the single official mods entry point. All functions receiving `$` are top-level declarations in that file, as the documented static analyzer requires. The hook dependency graph imports only local, pure ES modules; no Node, DOM, dynamic import or external packages enter the hooks sandbox. It registers one immediate command and one pane renderer. It observes lifecycle events and leaves their payloads unchanged. It neither contributes skills nor registers tools.
 
-`lib/usage.js` normalizes transcript counters, identities and calendar operations. `lib/quota.js` resolves explicit IANA local reset times to instants, handles DST ambiguity/gaps, and constructs half-open weekly intervals. `lib/pricing.js` prices de-duplicated requests with a dated, explicit standard-API catalog and propagates uncertainty/coverage. `lib/view-model.js` builds interval totals and bounded 45-day or 20-quota graph pages. `lib/visuals.js` builds escaped SVG strings. Presentation is data-only: no SVG script, foreignObject, remote resources or DOM injection. Standard controls handle keyboard input and selections. There is no Client renderer and no ui.message handler.
+`lib/usage.js` normalizes transcript counters, identities and calendar operations. `lib/quota.js` resolves explicit IANA local reset times to instants, handles DST ambiguity/gaps, and constructs half-open weekly intervals. `lib/pricing.js` prices de-duplicated requests with a dated, explicit model/speed API catalog and propagates uncertainty/coverage. `lib/view-model.js` builds interval totals and bounded 45-day or 20-quota graph pages. `lib/visuals.js` builds escaped SVG strings. Presentation is data-only: no SVG script, foreignObject, remote resources or DOM injection. Standard controls handle keyboard input and selections. There is no Client renderer and no ui.message handler.
 
 `scanner/index.mjs` runs as a dependency-free Node child via the documented `$.process.run(argv, {stdin, timeoutMs})`. Arguments remain separate; no shell interpolates paths or data. It streams JSONL because the host's text-file read API is not suitable for transcripts beyond its 4 MiB read bound. Node 20+ is an explicit external runtime dependency, not an assumed Node API inside a hook.
 
@@ -12,7 +12,7 @@
 
 ## Refresh and rendering
 
-Opening schedules work on `$.clock.after`; it does not wait for import inside a render. A 30-second timer refreshes while open. Turn/measurement events schedule a coalesced refresh. The UI is built from the last snapshot; changing range, grouping, selected day/quota, metric, theme or model requires no filesystem work. Configuration changes invalidate the snapshot with a revision check, preventing an in-flight old scan from publishing stale configuration data.
+Opening schedules work on `$.clock.after`; it does not wait for import inside a render. A 30-second timer refreshes while open. Turn/measurement events schedule a coalesced refresh. The UI is built from the last snapshot; changing range, grouping, selected day/quota, metric, theme, model or speed requires no filesystem work. Configuration changes invalidate the snapshot with a revision check, preventing an in-flight old scan from publishing stale configuration data.
 
 A hook scan and CSV export do not overlap. Across sessions, an atomic lock directory serializes the persistent writer. Readers encountering a live owner receive the last compatible snapshot with a busy flag. Compatibility includes timezone, subagent inclusion, source scope, reset day/time and price edition; a mismatched or legacy snapshot is not shown as weekly totals. A crashed owner's lock is reclaimed when its process no longer exists. The host cancels timers on mod unload. /clear and /resume are not treated as final shutdown, since session.start does not fire again for them.
 
@@ -21,11 +21,11 @@ The process has a 120-second upper timeout. The indexer uses an approximately 18
 ## Counting algorithm
 
 1. Discover local JSONL sources, canonicalize explicitly configured roots, skip internal links and the plugin cache.
-2. Reuse per-file records for unchanged size/mtime once TTL enrichment (`detailVersion: 2`) is complete; check a prefix fingerprint when a file changes. This is an optimization, not protection against deliberate file tampering.
+2. Reuse per-file records for unchanged size/mtime once TTL and response-speed enrichment (`detailVersion: 3`) is complete; check a prefix fingerprint when a file changes. This is an optimization, not protection against deliberate file tampering.
 3. Read appended UTF-8 bytes from a committed newline boundary. An incomplete final line is retried after growth; a valid final object without newline is counted but not byte-committed.
 4. Accept assistant responses with usage, a valid timestamp, a nonsynthetic model and an identity. Use API message ID, then request ID, then UUID. Hash identity globally, not per session. Keep no conversation text.
 5. Merge repeat blocks/copies by maximum cumulative field values. A main response copied into an agent transcript remains main. Agent-only identities obey the include-subagents filter.
-6. Price each unique response at its own prompt-length tier and TTL split, then aggregate each unique response into a local-calendar day and exact model ID, and independently into `[quotaStart, quotaEnd)` by its timestamp. Within each quota, keep day/model sub-buckets so calendar filters can clip a cycle without prorating totals. Any future timestamp is excluded until a later scan, retained in the record cache, and reported.
+6. Price each unique response at its own recorded response speed, prompt-length tier and TTL split, then aggregate each unique response into a local-calendar day and exact model ID, and independently into `[quotaStart, quotaEnd)` by its timestamp. Within each quota, keep day/model sub-buckets so calendar filters can clip a cycle without prorating totals. Any future timestamp is excluded until a later scan, retained in the record cache, and reported.
 7. Persist per-file numeric records, the registry and daily/weekly snapshot with temporary-file-plus-rename writes under the lock.
 
 The top-level cache creation count includes its TTL sub-buckets. Missing creation total may be synthesized from those buckets, but never added to them. Read/write/new input/output have separate columns. The cache-hit ratio uses weighted token sums, not daily ratio averages.
@@ -82,3 +82,12 @@ Known errors/notices are message keys and arguments rather than permanently tran
 The public Code `language` setting controls response/dictation language. No separate Desktop UI-locale field is documented in the consulted mod API; the implementation does not invent one or scrape Desktop preferences. It does not infer language from user conversations. Unsupported-language and default reasons are shown in the panel's settings.
 
 SVG labels get conservative host-independent font sizing, additional monetary-axis room and explicit column widths. The 1.2.0 native `Box` margins remain. `preview/app.js` simulates `$.settings.read` and configuration events; its language dropdown is demo-only and never loaded by the installed mod. Regional formatter tests use the actual Intl implementation, and Playwright measures SVG bounds/collisions in both themes. Host font metrics and native control appearance can still differ from the browser simulation.
+
+
+## 1.4.0: recorded response speed
+
+`lib/speed.js` accepts only the response usage values `fast` and `standard`; missing or conflicting evidence is `unknown`. It deliberately ignores request intent and session toggles. `mergeSpeed` enriches missing metadata and retains a sticky conflict flag so duplicate ordering cannot turn contradictory known evidence into a confirmed mode. See [the full evidence and upgrade contract](FAST_MODE.md).
+
+`priceRecord` uses an explicit verified Fast tariff table. Unsupported model/speed combinations are unpriced. Unknown speed retains a standard-equivalent comparison with `assumedStandardTokens`/`assumedStandardRequests` counters and visible warnings, never as a confirmed Standard request. `addPriced` carries disjoint `speeds` buckets through daily, weekly, per-model and selected-period totals. The persisted `speed` preference filters those derived buckets without rescanning or changing weekly boundaries.
+
+The raw numeric record cache keeps the same version and path and adds just the speed enum plus optional conflict flag. `detailVersion: 3` performs one enrichment pass over available logs. Deleted source records retain their counters but cannot invent missing speed. No new host API calls, model requests, telemetry or credentials are introduced. `lib/speed-i18n.js` contributes the same keys and parameters to all seven supported translation catalogues.

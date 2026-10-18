@@ -39,18 +39,19 @@ export function withDemoQuota(snapshot, options={}) {
         const values={};
         for(const k of ['read','write','input','output','requests']) values[k]=i===0?Math.floor(model[k]*.65):model[k]-Math.floor(model[k]*.65);
         // Synthetic per-request splits; never price a day as one Haiku prompt.
-        values.cost=zeroCost();
+        const pricedValues=zero();
         const requests=Math.max(1,values.requests);
         for(let r=0;r<requests;r++) {
           const rec={model:model.id,requests:1};
           for(const k of ['read','write','input','output']) rec[k]=Math.floor(values[k]/requests)+(r<values[k]%requests?1:0);
           // Most demonstration writes use 1h; a few missing TTLs illustrate ranges.
           if(Number(day.date.slice(-2))%11!==0) {rec.write1h=Math.floor(rec.write*.8);rec.write5m=rec.write-rec.write1h;}
-          addCost(values.cost,priceRecord(rec));
+          rec.speed = r%9===0 ? 'unknown' : model.id==='claude-opus-5-5' && r%3===0 ? 'fast' : 'standard';
+          add(pricedValues,{...rec,cost:priceRecord(rec)});
         }
         for(const map of [wk.byDate.get(date),byDate.get(date)]) {
           if(!map.has(model.id)) map.set(model.id,{id:model.id,...zero()});
-          add(map.get(model.id),values);
+          add(map.get(model.id),pricedValues);
         }
       }
     }

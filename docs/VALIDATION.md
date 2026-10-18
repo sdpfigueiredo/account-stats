@@ -1,4 +1,25 @@
-# Validation record · v1.3.1 · 2026-10-17
+# Validation record · v1.4.0 · 2026-10-18
+
+## Checks executed for response-speed statistics
+
+Executed locally on Linux with Node.js 22.16.0 and Chromium via Python Playwright, using synthetic records rather than the user's transcripts.
+
+- `npm test`: **262 tests passed**, zero failed, skipped or cancelled tests (66 added to the previous 196).
+- `npm run check` and `npm run check:repository`: source syntax, manifest versions, relative imports, scanner relocation and repository checks passed. These are not the official Claude validator.
+- `npm run preview`: regenerated the standalone fictitious-data preview from the actual hooks and SVG modules.
+- `python scripts/test-preview.py`: **1128 assertions passed**, with no page errors, external requests, measured SVG collisions/bounds violations or native-section spacing violations.
+- Fast/Standard/Unknown filtering is exercised across date ranges, day/week grouping, model filters, selected buckets, CSV and persisted preferences.
+- Tests cover cumulative-response deduplication, conflicting/absent metadata, ignored request intent, model-specific Fast pricing, unknown-speed assumptions, cache TTL ranges, metadata enrichment and deleted-log retention.
+
+The source baseline was verified against upstream commit `47270cd2d9de294bccdf90c7254a7a916d58728b` (tree `b866f0f3cfc0de22a448a6b5cbf268c51e63b22b`), including the user's README screenshots. No real Claude Desktop execution, official loader validation, paid API call or hosted GitHub CI run is claimed for this feature.
+
+## Additional first-run checks
+
+After updating through the marketplace, let the one-time metadata scan finish. Confirm that the **Request speed** selector and both speed cards follow the Code language. Confirm per-mode counts sum to the unfiltered request count, all four token categories are retained, and missing response speed is **Unknown**, not Standard. Unknown-speed cost must show the standard-price assumption. Read-only logs, previous reset settings and history should remain intact. Older logs without response speed cannot retrospectively establish Fast usage.
+
+---
+
+# Historical validation record · v1.3.1 · 2026-10-17
 
 This release changes repository distribution, not the v1.3.0 hook, scanner, translation or calculation code. The price catalogue is unchanged.
 

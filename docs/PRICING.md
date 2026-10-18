@@ -1,17 +1,19 @@
-# API-equivalent token cost · price snapshot 2026-10-16
+# API-equivalent token cost · price snapshot 2026-10-18
 
-This is a local **standard Claude API token-cost comparison in USD**, not an account bill, a historical invoice, a subscription charge, or a quota percentage. Historical token records are valued at the bundled price snapshot, not at prices inferred for the day they were recorded. The calculator makes no model calls or HTTP requests.
+This is a local **Claude API token-cost comparison in USD, using recorded response speed**, not an account bill, a historical invoice, a subscription charge, or a quota percentage. Historical token records are valued at the bundled price snapshot, not at prices inferred for the day they were recorded. The calculator makes no model calls or HTTP requests.
 
 ## Official sources
 
-Verified on 2026-10-16:
+Verified on 2026-10-18:
 
 - Pricing, standard model rates and cache multipliers: https://platform.claude.com/docs/en/about-claude/pricing
 - Haiku 5.5 request-length tiers: https://platform.claude.com/docs/en/models/haiku-5-5/overview
 - Cache usage semantics: https://platform.claude.com/docs/en/build-with-claude/prompt-caching
 - Sonnet 4.5 current published window: https://platform.claude.com/docs/en/models/sonnet-4-5/overview
 
-The executable catalog is `lib/pricing.js` (`API_RATES`). It stores USD **per million tokens**, with explicit read prices. In particular, the current read rates are not uniformly 10% of input: Opus 5.5 uses $0.20/MTok, Sonnet 5.5 $0.10/MTok, and Fable/Mythos 5.1 $0.25/MTok. These prices are a dated snapshot, not a live price feed.
+Fast mode response evidence and tariffs: https://platform.claude.com/docs/en/build-with-claude/fast-mode
+
+The executable catalog is `lib/pricing.js` (`API_RATES` and `FAST_API_RATES`). It stores USD **per million tokens**, with explicit read prices. In particular, the current read rates are not uniformly 10% of input: Opus 5.5 uses $0.20/MTok, Sonnet 5.5 $0.10/MTok, and Fable/Mythos 5.1 $0.25/MTok. These prices are a dated snapshot, not a live price feed.
 
 ## Request calculation
 
@@ -41,11 +43,13 @@ A model row lacking per-request-derived cost data is unpriced; a day is never tr
 
 ## Deliberate scope
 
-The equivalent assumes standard synchronous first-party API token rates. It does **not** reproduce Fast mode premiums, Batch/contract discounts, region/data-residency supplements, partner cloud invoices, taxes, server-tool/search fees or non-token products. It is not a claim of subscription savings or of the exact amount a different provider would charge. Ordinary tool-related tokens already present in usage are included once; no extra estimated tool-token overhead is added.
+The equivalent uses synchronous first-party API token rates for the recorded response speed. Confirmed Fast requests use the verified Fast rate for their exact model; unsupported Fast/model pairs remain unpriced. Unknown speed remains a distinct category, valued at standard rates with an explicit assumption counter and warning. This may underestimate actual costs and must not be presented as confirmed Standard usage. See [Fast mode](FAST_MODE.md).
+
+It does **not** reproduce Batch/contract discounts, region/data-residency supplements, partner cloud invoices, taxes, server-tool/search fees or non-token products. It is not a claim of subscription savings or of the exact amount a different provider would charge. Ordinary tool-related tokens already present in usage are included once; no extra estimated tool-token overhead is added.
 
 ## Upgrade and refresh
 
-The cache directory and outer version remain `account-stats/v1`. Per-file records now have `detailVersion: 2`, with `write5m` and `write1h`. On the first scan after upgrading, extant older transcripts are read again incrementally to enrich retained records. Already-observed counters and pruned records are **not** discarded. An archived transcript with no recoverable TTL remains in the totals with an explicit cost interval.
+The cache directory and outer version remain `account-stats/v1`. Per-file records now have `detailVersion: 3`, with `write5m`, `write1h`, `speed` and an optional sticky `speedConflict` flag. On the first scan after upgrading, extant older transcripts are read again incrementally to enrich retained records. Already-observed counters and pruned records are **not** discarded. An archived transcript with no recoverable TTL remains in the totals with an explicit cost interval. An archived transcript without speed stays Unknown. Its tokens are retained, never assigned to the confirmed Standard bucket.
 
 Money is derived from retained numeric records at aggregation time, not persisted into every response. Snapshots carry `pricing.version`, `pricing.asOf`, currency and basis. A busy snapshot made with another price edition is rejected. Replacing the catalog requires changing `PRICING_VERSION`, rebuilding the preview, running the tests and reloading the plugin. This version does not fetch or scrape prices at runtime.
 
@@ -54,3 +58,5 @@ Money is derived from retained numeric records at aggregation time, not persiste
 The period card is independent of graph pagination. The selected day/quota has its own cost card, and each model shows both token counts and category costs. Selecting a token metric does not remove input/output or monetary totals. The new chart mode is `Custo equivalente API · USD`.
 
 Existing CSV columns are retained, with appended columns for status, USD, price date, total lower/upper bounds, read, write lower/upper bounds, input, output, priced/unpriced token counts and unknown-TTL write tokens. `unavailable` rows use **blank monetary cells**, not a misleading zero. `partial` rows contain only their explicitly marked priced subtotal.
+
+CSV additionally appends standard-assumption token/request counts and disjoint Fast, Standard and Unknown request/token/cost subtotals. The UI speed filter is also applied to daily and weekly exports.

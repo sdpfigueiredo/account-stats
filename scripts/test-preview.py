@@ -74,6 +74,19 @@ async def main():
     for metric in ['total','cost']:
      await choose('metric',metric);await audit(locale+'/'+theme+'/'+metric)
      await quota_check()
+    # Speed filters run entirely against the indexed data in every language/theme.
+    all_speeds=(await state())['totals']
+    for speed in ['fast','standard','unknown']:
+     await choose('speed',speed);filtered=await state()
+     check(filtered['preferences']['speed']==speed,'Speed filter not retained')
+     for k in ['read','write','input','output','requests']:
+      check(filtered['totals'][k]==all_speeds['speeds'][speed][k],'Speed subtotal mismatch: '+k)
+     check(filtered['totals']['cost']==all_speeds['speeds'][speed]['cost'],'Speed cost mismatch')
+     for other in ['fast','standard','unknown']:
+      if other!=speed:check(filtered['totals']['speeds'][other]['requests']==0,'Other mode leaked into filter')
+     await audit(locale+'/'+theme+'/speed-'+speed)
+    await choose('speed','all')
+    check((await state())['totals']==all_speeds,'All speeds failed to restore totals')
    if locale=='de-DE':await page.screenshot(path=str(BASE/'preview/preview-german-light.png'),full_page=True)
   # Existing navigation, ranges, all four counters and cost selection.
   await page.locator('#preview-language').select_option('english');await settle()
@@ -120,6 +133,7 @@ async def main():
   if await page.locator('body').get_attribute('data-theme')!='dark':await click('theme')
   await audit('PT final');await page.screenshot(path=str(BASE/'preview/preview-portuguese.png'),full_page=True)
   await page.locator('img[alt^="Cota "]').screenshot(path=str(BASE/'preview/preview-quota-portuguese.png'))
+  await page.locator('img[alt^="Modo dos pedidos · seleção"]').screenshot(path=str(BASE/'preview/preview-speed-portuguese.png'))
   await page.set_viewport_size({'width':390,'height':844});await settle();await audit('PT 390px')
   await page.screenshot(path=str(BASE/'preview/preview-narrow.png'),full_page=True)
   # Same runtime card with billions of tokens, independent of its chart filter.

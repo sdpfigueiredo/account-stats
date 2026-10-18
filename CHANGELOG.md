@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.0 — 2026-10-18 (prepared; not published)
+
+- Detect response speed only from transcript `message.usage.speed`; separate Fast, Standard and Unknown. Missing evidence is not guessed from the model, current settings, effort, service tier or latency.
+- Add a persisted speed filter and per-period/selected-interval request, token and API-cost breakdowns. Daily/weekly/model totals, pagination and CSV respect the same filter.
+- Price confirmed Fast requests with explicit verified model tariffs, including cache reads and 5m/1h writes. Unknown speed retains a visibly labelled standard-equivalent assumption. Unverified Fast/model combinations remain unpriced.
+- Enrich unchanged logs once using detail version 3; preserve archived history, all four token counters, TTLs and configurable weekly reset. Contradictory duplicate response speeds remain Unknown regardless of merge order.
+- Localize new controls, summaries, warnings and pricing explanations in all seven catalogues, keeping explicit native margins and accessible SVG/terminal descriptions.
+- Add parser, migration, pricing, filtering, deduplication, localization, privacy and browser regressions. No runtime dependencies, network/model calls or host API permissions added.
+
 ## 1.3.1 — 2026-10-17
 
 - Prepared a single-plugin GitHub repository with the stable `account-stats-marketplace` catalogue and root-relative source.

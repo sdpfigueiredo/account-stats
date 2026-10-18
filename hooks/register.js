@@ -1,3 +1,4 @@
+import { SPEEDS, speedFilter } from '../lib/speed.js';
 import { createI18n, resolveLanguage } from '../lib/i18n.js';
 /**
  * Claude Code Desktop mod. Only official function hooks / $ APIs.
@@ -8,12 +9,12 @@ import { makeView } from '../lib/view-model.js';
 import { total, dayKey } from '../lib/usage.js';
 import { PRICING_DATE, costOf, costStatus } from '../lib/pricing.js';
 import { quotaSettings, quotaIntervalLabel } from '../lib/quota.js';
-import { palette, headerSvg, overviewSvg, chartSvg, modelsSvg, quotaSvg, cycleSvg, costSvg, statusSvg } from '../lib/visuals.js';
+import { palette, headerSvg, overviewSvg, chartSvg, modelsSvg, quotaSvg, cycleSvg, costSvg, statusSvg, speedSvg } from '../lib/visuals.js';
 const PANE = 'account-stats';
-const KEYS = ['range','model','mode','theme','nodePath','timeZone','extraRoots','includeSubagents','grouping','resetDay','resetTime'];
+const KEYS = ['range','model','speed','mode','theme','nodePath','timeZone','extraRoots','includeSubagents','grouping','resetDay','resetTime'];
 
 let configuration = {};
-let prefs = { range: '30d', model: 'all', mode: 'total', theme: 'dark', page: 0, day: '', week: '', grouping: 'day',
+let prefs = { range: '30d', model: 'all', speed: 'all', mode: 'total', theme: 'dark', page: 0, day: '', week: '', grouping: 'day',
       resetDay: configuration.reset_day ?? 4, resetTime: configuration.reset_time ?? '20:00',
   nodePath: configuration.node_path || 'node', timeZone: configuration.time_zone || 'Europe/Lisbon',
   extraRoots: configuration.extra_roots || '', includeSubagents: configuration.include_subagents !== false };
@@ -108,7 +109,7 @@ async function refresh($, action = 'scan') {
     const config = { timeZone: prefs.timeZone, resetDay: prefs.resetDay, resetTime: prefs.resetTime, includeSubagents: prefs.includeSubagents,
       extraRoots: [...String(prefs.extraRoots || '').split(/[\n;]/).map(s => s.trim()).filter(Boolean), ...extraTranscriptRoots],
       action, budgetMs: 18000,
-      selection: { start: view.start, end: view.end, model: view.model, range: view.range, grouping: view.grouping } };
+      selection: { start: view.start, end: view.end, model: view.model, speed: view.speed, range: view.range, grouping: view.grouping } };
     const script = $.plugin.root.replace(/[\\/]$/, '') + '/scanner/index.mjs';
     const result = await $.process.run([executable, script], { stdin: JSON.stringify(config), timeoutMs: 120000 });
     let parsed;
@@ -143,7 +144,7 @@ async function open($, focus = true) {
 
 export function register(on, options = {}) {
     configuration = options;
-    prefs = { range: '30d', model: 'all', mode: 'total', theme: 'dark', page: 0, day: '', week: '', grouping: 'day',
+    prefs = { range: '30d', model: 'all', speed: 'all', mode: 'total', theme: 'dark', page: 0, day: '', week: '', grouping: 'day',
       resetDay: configuration.reset_day ?? 4, resetTime: configuration.reset_time ?? '20:00',
       nodePath: configuration.node_path || 'node', timeZone: configuration.time_zone || 'Europe/Lisbon',
       extraRoots: configuration.extra_roots || '', includeSubagents: configuration.include_subagents !== false };
@@ -162,6 +163,7 @@ export function register(on, options = {}) {
       }
     } catch { /* Default preferences remain usable. */ }
     if (!['dark','light'].includes(prefs.theme)) prefs.theme = 'dark';
+    prefs.speed = speedFilter(prefs.speed);
     if (!['day','week'].includes(prefs.grouping)) prefs.grouping = 'day';
     try { quotaSettings(prefs); }
     catch { prefs.resetDay = 4; prefs.resetTime = '20:00'; prefs.timeZone = 'Europe/Lisbon'; notice = message('errorResetConfig'); }
@@ -256,8 +258,12 @@ export function register(on, options = {}) {
       cards.push(Select({key:'model',label:t('model'),value:view.model,
         options:[{value:'all',label:t('allModels')},...view.allModels.map(id=>({value:id,label:id}))],
         onSelect:value=>change($,{model:value,day:'',page:0})}));
+      cards.push(Select({key:'speed',label:t('speedFilter'),value:view.speed,
+        options:[{value:'all',label:t('speedAll')},...SPEEDS.map(speed=>({value:speed,label:t(`speed_${speed}`)}))],
+        onSelect:value=>change($,{speed:speedFilter(value),day:'',week:'',page:0})}));
       cards.push(svg(overviewSvg(view,prefs.theme,l)));
       cards.push(svg(costSvg(view.totals,t('costPeriod'),t('periodSubtitle',{start:l.date(view.start),end:l.date(view.end)}),prefs.theme,l)));
+      cards.push(svg(speedSvg(view.totals,t('speedPeriod'),prefs.theme,l)));
       if (needsQuota) cards.push(line(t('reset',{day:l.weekday(prefs.resetDay),time:prefs.resetTime,zone:view.timeZone})));
       if (view.range==='quota') cards.push(line(t('currentInterval',{interval:intervalLabel(view.currentQuota,true)})));
       if (weekly && view.clippedWeeks) cards.push(line(t('clippedHelp')));
@@ -283,6 +289,7 @@ export function register(on, options = {}) {
       }
       cards.push(svg(costSvg(view.day,t(weekly?'costWeek':'costDay'),
         weekly?intervalLabel(view.day)+(view.day.clipped?' · '+t('partialFilter'):''):l.date(view.day.date),prefs.theme,l)));
+      cards.push(svg(speedSvg(view.day,t('speedSelection'),prefs.theme,l)));
       cards.push(row([
         button('daily-models',(periodModels?'':'● ')+t(weekly?'modelsWeek':'modelsDay'),()=>{periodModels=false;modelPage=0;redraw($);},periodModels),
         button('period-models',(periodModels?'● ':'')+t('inPeriod'),()=>{periodModels=true;modelPage=0;redraw($);},!periodModels),
@@ -344,6 +351,8 @@ export function register(on, options = {}) {
       cards.push(line(t('pricingHeading'),false));
       cards.push(line(t('pricingHelp',{date:l.date(PRICING_DATE)})));
       cards.push(line(t('ttlHelp')));
+      cards.push(line(t('speedHelp')));
+      cards.push(line(t('speedUnknownHelp')));
       cards.push(line(t('exclusions')));
     }
     if (diagnostics) {

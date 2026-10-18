@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const files=['lib/locales/en.js','lib/locales/pt-PT.js','lib/locales/pt-BR.js','lib/locales/es.js','lib/locales/fr.js','lib/locales/de.js','lib/locales/it.js','lib/i18n.js','lib/usage.js','lib/pricing.js','lib/quota.js','lib/view-model.js','lib/visuals.js','hooks/register.js','tests/fixtures.mjs','preview/app.js'];
+const files=['lib/locales/en.js','lib/locales/pt-PT.js','lib/locales/pt-BR.js','lib/locales/es.js','lib/locales/fr.js','lib/locales/de.js','lib/locales/it.js','lib/speed-i18n.js','lib/i18n.js','lib/speed.js','lib/usage.js','lib/pricing.js','lib/quota.js','lib/view-model.js','lib/visuals.js','hooks/register.js','tests/fixtures.mjs','preview/app.js'];
 const parts=['const x = escapeXml;'];
 for(const file of files){let source=await fs.readFile(path.join(root,file),'utf8');if(['lib/view-model.js','tests/fixtures.mjs'].includes(file))source=source.replace(/(?<!\.)\badd\(/g,'addPriced(');parts.push('// '+file+'\n'+source.replace(/^import .*?;\s*$/gm,'').replace(/^export /gm,''));}
 const html=`<!doctype html><html lang="en-US"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Account Stats — preview</title>
